@@ -17,6 +17,8 @@
 
 #include <shv/core/stringview.h>
 
+#include <QtConcurrentRun>
+
 #include <QDirIterator>
 #include <QTimer>
 
@@ -184,6 +186,61 @@ enum class SlaveFound {
 	No
 };
 
+const cp::MetaMethod ALARM_LOG_METHOD{LeafNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List|String", cp::AccessLevel::Read, {}, "Desc"};
+class AggregateNode : public shv::iotqt::node::ShvNode {
+	Q_OBJECT
+
+public:
+	using shv::iotqt::node::ShvNode::ShvNode;
+	size_t methodCount(const StringViewList& shv_path) override
+	{
+		return ShvNode::methodCount(shv_path) + 1;
+	}
+
+	const cp::MetaMethod* metaMethod(const StringViewList& shv_path, size_t index) override
+	{
+		if (index >= ShvNode::methodCount(shv_path)) {
+			return &ALARM_LOG_METHOD;
+		}
+
+		return ShvNode::metaMethod(shv_path, index);
+	}
+
+	shv::chainpack::RpcValue callMethodRq(const shv::chainpack::RpcRequest &rq) override
+	{
+		if (rq.method() == LeafNode::M_ALARM_LOG) {
+			QtConcurrent::run([this, rq] {
+				const auto leaf_nodes = this->findChildren<LeafNode*>();
+				AlarmLog res_log;
+				for (const auto& leaf_node : leaf_nodes) {
+					auto log = leaf_node->alarmLog(rq.params());
+					auto add_path_prefix = [leaf_node] (auto& alarms) {
+						for (auto& alarm_with_ts : alarms) {
+							alarm_with_ts.alarm.setPath(shv::core::utils::joinPath(leaf_node->shvPath().asString(), alarm_with_ts.alarm.path()));
+						}
+					};
+					add_path_prefix(log.snapshot);
+					add_path_prefix(log.events);
+					std::ranges::copy(log.snapshot, std::back_inserter(res_log.snapshot));
+					std::ranges::copy(log.events, std::back_inserter(res_log.events));
+				}
+
+				std::ranges::sort(res_log.events, [] (const auto& a, const auto& b) {
+					return a.timestamp < b.timestamp;
+				});
+
+				HistoryApp::instance()->rpcConnection()->sendResponse(rq.requestId(), res_log.toRpcValue());
+			}).then(this, [this] {
+				shvDebug() << "Aggregate get log on" << shvPath() << "done";
+			});
+
+			return {};
+		}
+
+		return shv::iotqt::node::ShvNode::callMethodRq(rq);
+	}
+};
+
 void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map& tree, const QString& node_name, std::string journal_cache_dir, std::vector<SlaveHpInfo>& slave_hps, std::set<std::string>& leaf_nodes, SlaveFound slave_found)
 {
 	shv::iotqt::node::ShvNode* node;
@@ -208,7 +265,7 @@ void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map&
 			leaf_sync_path = meta_node.value("HP3").asMap().value("syncPath", ".app/history").asString();
 			node = new LeafNode(node_name.toStdString(), journal_cache_dir, log_type, parent_node);
 		} else {
-			node = new shv::iotqt::node::ShvNode(node_name.toStdString(), parent_node);
+			node = new AggregateNode(node_name.toStdString(), parent_node);
 		}
 
 		auto log_source_shv_path = shv::core::utils::joinPath(std::string{"shv"}, node->shvPath().asString());
@@ -227,7 +284,7 @@ void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map&
 		}
 
 	} else {
-		node = new shv::iotqt::node::ShvNode(node_name.toStdString(), parent_node);
+		node = new AggregateNode(node_name.toStdString(), parent_node);
 	}
 
 	for (const auto& [k, v] : tree) {
@@ -436,3 +493,5 @@ QString HistoryApp::uptime() const
 		.arg(sec, 2, 10, QChar('0'))
 		.arg(ms, 3, 10, QChar('0'));
 }
+
+#include "historyapp.moc"

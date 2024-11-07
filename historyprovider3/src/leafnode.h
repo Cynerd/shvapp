@@ -8,6 +8,8 @@
 #include <shv/iotqt/node/shvnode.h>
 #include <shv/iotqt/node/localfsnode.h>
 
+struct AlarmLog;
+
 class LeafNode : public shv::iotqt::node::ShvNode
 {
 	Q_OBJECT
@@ -15,7 +17,7 @@ class LeafNode : public shv::iotqt::node::ShvNode
 	using Super = shv::iotqt::node::ShvNode;
 
 public:
-	static constexpr auto M_GET_LOG = "getLog";
+	static constexpr auto M_ALARM_LOG = "alarmLog";
 
 	LeafNode(const std::string& node_id, const std::string& journal_cache_dir, const LogType log_type, ShvNode* parent = nullptr);
 
@@ -32,6 +34,8 @@ public:
 
 	std::vector<shv::core::utils::ShvAlarm> alarms() const;
 
+	AlarmLog alarmLog(const shv::chainpack::RpcValue& params);
+
 private:
 	shv::chainpack::RpcValue getLog(const shv::core::utils::ShvGetLogParams& get_log_params);
 
@@ -43,3 +47,25 @@ private:
 
 	shv::core::utils::ShvAlarm::Severity m_overallAlarm = shv::core::utils::ShvAlarm::Severity::Invalid;
 };
+
+struct AlarmLog {
+	std::vector<LeafNode::AlarmWithTimestamp> snapshot;
+	std::vector<LeafNode::AlarmWithTimestamp> events;
+
+	shv::chainpack::RpcValue toRpcValue() const
+	{
+		auto asList = [] (const auto& input) {
+			shv::chainpack::RpcValue::List ret;
+			std::ranges::transform(input, std::back_inserter(ret), &LeafNode::AlarmWithTimestamp::toRpcValue);
+			return ret;
+		};
+
+		shv::chainpack::RpcValue::Map res{
+			{"snapshot", asList(snapshot)},
+			{"events", asList(events)},
+
+		};
+		return res;
+	}
+};
+

@@ -8,7 +8,7 @@ add_library(libhistoryprovider STATIC
     )
 
 target_include_directories(libhistoryprovider PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(libhistoryprovider PUBLIC libshv::libshviotqt)
+target_link_libraries(libhistoryprovider PUBLIC libshv::libshviotqt Qt::Concurrent)
 
 add_executable(historyprovider3
     src/main.cpp

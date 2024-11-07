@@ -499,6 +499,88 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				EXPECT_RESPONSE(expected);
 			});
 		}
+
+		DOCTEST_SUBCASE("aggregate alarm log") {
+			const auto snapshot =
+				R"(2022-07-07T18:06:17.784Z	809781	one/status	1		chng	2	)""\n"
+				R"(2022-07-07T18:06:20.784Z	809781	one/status	0		chng	2	)""\n"
+				R"(2022-07-07T18:06:23.784Z	809781	one/status	1		chng	2	)""\n"
+				;
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				create_dummy_cache_files("some_node/site_one", {
+					{"2022-07-06T18-06-15-000.log2", snapshot}
+				});
+				create_dummy_cache_files("some_node/site_two", {
+					{"2022-07-06T18-06-15-000.log2", snapshot}
+				});
+				SEND_SITES_YIELD(mock_sites::two_sites_inside_some_node);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_TYPEINFO("some_node/site_one");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_TYPEINFO("some_node/site_two");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv/some_node/site_one", "chng");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION("shv/some_node/site_one", "cmdlog");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv/some_node/site_two", "chng");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION("shv/some_node/site_two", "cmdlog");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				SEND_TYPEINFO_YIELD("some_node/site_one", mock_typeinfo::one_device);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				SEND_TYPEINFO_YIELD("some_node/site_two", mock_typeinfo::one_device);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_node/site_one", "alarmmod");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_node/site_one:overallAlarm", "chng", static_cast<int>(Severity::Error));
+				REQUIRE(HistoryApp::instance()->leafNode("some_node/site_one")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
+					make_alarm("one/status/some_alarm_name")
+				});
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_node/site_two", "alarmmod");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_node/site_two:overallAlarm", "chng", static_cast<int>(Severity::Error));
+				REQUIRE(HistoryApp::instance()->leafNode("some_node/site_two")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
+					make_alarm("one/status/some_alarm_name")
+				});
+
+				REQUEST_YIELD("some_node", "alarmLog", RpcValue::Map{
+					{"since", RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")},
+					{"until", RpcValue::DateTime::fromUtcString("2022-07-07T18:06:30.784Z")}
+				});
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				auto expected = RpcValue::Map{
+					{"snapshot", RpcValue::List{
+						LeafNode::AlarmWithTimestamp{make_alarm("some_node/site_one/one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
+						LeafNode::AlarmWithTimestamp{make_alarm("some_node/site_two/one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
+					}},
+					{"events", RpcValue::List{
+						LeafNode::AlarmWithTimestamp{make_alarm("some_node/site_one/one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
+						LeafNode::AlarmWithTimestamp{make_alarm("some_node/site_two/one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
+						LeafNode::AlarmWithTimestamp{make_alarm("some_node/site_one/one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
+						LeafNode::AlarmWithTimestamp{make_alarm("some_node/site_two/one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
+					}}
+				};
+				EXPECT_RESPONSE(expected);
+			});
+		}
 	}
 	return res;
 }

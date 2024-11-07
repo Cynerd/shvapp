@@ -22,11 +22,12 @@
 
 namespace cp = shv::chainpack;
 namespace {
+const auto M_GET_LOG = "getLog";
 const auto M_LOG_SIZE = "logSize";
 const std::vector<cp::MetaMethod> methods {
 	cp::methods::DIR,
 	cp::methods::LS,
-	{LeafNode::M_GET_LOG, cp::MetaMethod::Flag::None, "RpcValue", "RpcValue", cp::AccessLevel::Read},
+	{M_GET_LOG, cp::MetaMethod::Flag::None, "RpcValue", "RpcValue", cp::AccessLevel::Read},
 	{M_LOG_SIZE, cp::MetaMethod::Flag::IsGetter, {}, "UInt", cp::AccessLevel::Read},
 };
 
@@ -39,12 +40,11 @@ const std::vector<cp::MetaMethod> push_log_methods {
 
 const auto M_OVERALL_ALARM = "overallAlarm";
 const auto M_ALARM_TABLE = "alarmTable";
-const auto M_ALARM_LOG = "alarmLog";
 const auto M_ALARM_MOD = "alarmmod";
 
 const std::vector<cp::MetaMethod> alarm_methods {
 	{M_ALARM_TABLE,  cp::MetaMethod::Flag::None, {}, "List|String", cp::AccessLevel::Read, {{M_ALARM_MOD}}},
-	{M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List|String", cp::AccessLevel::Read, {}, "Desc"},
+	{LeafNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List|String", cp::AccessLevel::Read, {}, "Desc"},
 	{M_OVERALL_ALARM, cp::MetaMethod::Flag::IsGetter, {}, "Int", cp::AccessLevel::Read, {{cp::Rpc::SIG_VAL_CHANGED}}},
 };
 }
@@ -312,26 +312,61 @@ shv::chainpack::RpcValue LeafNode::getLog(const shv::core::utils::ShvGetLogParam
 	return shv::core::utils::getLog(readers, get_log_params, shv::chainpack::RpcValue::DateTime::now());
 }
 
-struct AlarmLog {
-	std::vector<LeafNode::AlarmWithTimestamp> snapshot;
-	std::vector<LeafNode::AlarmWithTimestamp> events;
-
-	shv::chainpack::RpcValue toRpcValue() const
-	{
-		auto asList = [] (const auto& input) {
-			shv::chainpack::RpcValue::List ret;
-			std::ranges::transform(input, std::back_inserter(ret), &LeafNode::AlarmWithTimestamp::toRpcValue);
-			return ret;
-		};
-
-		shv::chainpack::RpcValue::Map res{
-			{"snapshot", asList(snapshot)},
-			{"events", asList(events)},
-
-		};
-		return res;
+AlarmLog LeafNode::alarmLog(const shv::chainpack::RpcValue& params)
+{
+	if (!params.isMap()) {
+		SHV_EXCEPTION("Expected a Map param");
 	}
-};
+
+	if (!params.asMap().hasKey("since")) {
+		SHV_EXCEPTION("Missing since param");
+	}
+
+	auto since = params.asMap().at("since");
+	if (!since.isDateTime()) {
+		SHV_EXCEPTION(std::string("Expected since param to be DateTime, got: ") + since.typeName());
+	}
+
+	if (!params.asMap().hasKey("until")) {
+		SHV_EXCEPTION("Missing until param");
+	}
+
+	auto until = params.asMap().at("until");
+	if (!until.isDateTime()) {
+		SHV_EXCEPTION(std::string("Expected until param to be DateTime, got: ") + until.typeName());
+	}
+
+	shv::core::utils::ShvGetLogParams get_log_params;
+	get_log_params.since = since.toDateTime();
+	get_log_params.until = until.toDateTime();
+	get_log_params.withSnapshot = true;
+	auto log = shv::core::utils::ShvLogRpcValueReader(getLog(get_log_params));
+	AlarmLog alarm_log;
+	std::vector<LeafNode::AlarmWithTimestamp> current_snapshot;
+	auto snapshot_saved = false;
+	while (log.next()) {
+		const auto& entry = log.entry();
+
+		auto changed_alarms = get_changed_alarms(current_snapshot, m_typeInfo, entry.path, entry.value);
+		if (!log.isInSnapshot()) {
+			if (!snapshot_saved) {
+				// Our snapshot is complete, so we'll save it now, because we'll keep updating it as we're building the events.
+				alarm_log.snapshot = current_snapshot;
+				snapshot_saved = true;
+			}
+
+			for (const auto& changed_alarm : changed_alarms) {
+				alarm_log.events.emplace_back(AlarmWithTimestamp{
+					.alarm=changed_alarm,
+						.timestamp=entry.dateTime()
+				});
+			}
+		}
+		update_alarms(current_snapshot, changed_alarms, entry.dateTime());
+	}
+
+	return alarm_log;
+}
 
 shv::chainpack::RpcValue LeafNode::callMethod(const StringViewList& shv_path, const std::string& method, const shv::chainpack::RpcValue& params, const shv::chainpack::RpcValue& user_id)
 {
@@ -433,58 +468,7 @@ shv::chainpack::RpcValue LeafNode::callMethod(const StringViewList& shv_path, co
 			return std::get<std::string>(m_typeInfo);
 		}
 
-		if (!params.isMap()) {
-			SHV_EXCEPTION("Expected a Map param");
-		}
-
-		if (!params.asMap().hasKey("since")) {
-			SHV_EXCEPTION("Missing since param");
-		}
-
-		auto since = params.asMap().at("since");
-		if (!since.isDateTime()) {
-			SHV_EXCEPTION(std::string("Expected since param to be DateTime, got: ") + since.typeName());
-		}
-
-		if (!params.asMap().hasKey("until")) {
-			SHV_EXCEPTION("Missing until param");
-		}
-
-		auto until = params.asMap().at("until");
-		if (!until.isDateTime()) {
-			SHV_EXCEPTION(std::string("Expected until param to be DateTime, got: ") + until.typeName());
-		}
-
-		shv::core::utils::ShvGetLogParams get_log_params;
-		get_log_params.since = since.toDateTime();
-		get_log_params.until = until.toDateTime();
-		get_log_params.withSnapshot = true;
-		auto log = shv::core::utils::ShvLogRpcValueReader(getLog(get_log_params));
-		AlarmLog alarm_log;
-		std::vector<LeafNode::AlarmWithTimestamp> current_snapshot;
-		auto snapshot_saved = false;
-		while (log.next()) {
-			const auto& entry = log.entry();
-
-			auto changed_alarms = get_changed_alarms(current_snapshot, m_typeInfo, entry.path, entry.value);
-			if (!log.isInSnapshot()) {
-				if (!snapshot_saved) {
-					// Our snapshot is complete, so we'll save it now, because we'll keep updating it as we're building the events.
-					alarm_log.snapshot = current_snapshot;
-					snapshot_saved = true;
-				}
-
-				for (const auto& changed_alarm : changed_alarms) {
-					alarm_log.events.emplace_back(AlarmWithTimestamp{
-						.alarm=changed_alarm,
-						.timestamp=entry.dateTime()
-					});
-				}
-			}
-			update_alarms(current_snapshot, changed_alarms, entry.dateTime());
-		}
-
-		return alarm_log.toRpcValue();
+		return alarmLog(params).toRpcValue();
 	}
 
 	if (method == M_OVERALL_ALARM) {
