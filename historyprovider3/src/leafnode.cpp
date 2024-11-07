@@ -22,12 +22,11 @@
 
 namespace cp = shv::chainpack;
 namespace {
-const auto M_GET_LOG = "getLog";
 const auto M_LOG_SIZE = "logSize";
 const std::vector<cp::MetaMethod> methods {
 	cp::methods::DIR,
 	cp::methods::LS,
-	{M_GET_LOG, cp::MetaMethod::Flag::None, "RpcValue", "RpcValue", cp::AccessLevel::Read},
+	{LeafNode::M_GET_LOG, cp::MetaMethod::Flag::None, "RpcValue", "RpcValue", cp::AccessLevel::Read},
 	{M_LOG_SIZE, cp::MetaMethod::Flag::IsGetter, {}, "UInt", cp::AccessLevel::Read},
 };
 

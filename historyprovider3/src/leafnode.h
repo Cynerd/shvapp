@@ -15,6 +15,8 @@ class LeafNode : public shv::iotqt::node::ShvNode
 	using Super = shv::iotqt::node::ShvNode;
 
 public:
+	static constexpr auto M_GET_LOG = "getLog";
+
 	LeafNode(const std::string& node_id, const std::string& journal_cache_dir, const LogType log_type, ShvNode* parent = nullptr);
 
 	size_t methodCount(const StringViewList& shv_path) override;
