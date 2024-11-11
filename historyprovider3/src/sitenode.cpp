@@ -1,4 +1,4 @@
-#include "leafnode.h"
+#include "sitenode.h"
 #include "historyapp.h"
 #include "valuecachenode.h"
 #include "utils.h"
@@ -44,19 +44,19 @@ const auto M_ALARM_MOD = "alarmmod";
 
 const std::vector<cp::MetaMethod> alarm_methods {
 	{M_ALARM_TABLE,  cp::MetaMethod::Flag::None, {}, "List|String", cp::AccessLevel::Read, {{M_ALARM_MOD}}},
-	{LeafNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List|String", cp::AccessLevel::Read, {}, "Desc"},
+	{SiteNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List|String", cp::AccessLevel::Read, {}, "Desc"},
 	{M_OVERALL_ALARM, cp::MetaMethod::Flag::IsGetter, {}, "Int", cp::AccessLevel::Read, {{cp::Rpc::SIG_VAL_CHANGED}}},
 };
 }
 
-std::vector<shv::core::utils::ShvAlarm> LeafNode::alarms() const
+std::vector<shv::core::utils::ShvAlarm> SiteNode::alarms() const
 {
 	std::vector<shv::core::utils::ShvAlarm> res;
 	std::ranges::transform(m_alarms, std::back_inserter(res), std::identity{}, &AlarmWithTimestamp::alarm);
 	return res;
 }
 
-shv::chainpack::RpcValue LeafNode::AlarmWithTimestamp::toRpcValue() const
+shv::chainpack::RpcValue SiteNode::AlarmWithTimestamp::toRpcValue() const
 {
 	auto res = this->alarm.toRpcValue(true).asMap();
 	res.emplace("timestamp", timestamp);
@@ -73,7 +73,7 @@ auto get_changed_alarms(const auto& alarms, const auto& type_info, const auto& s
 					return std::ranges::find(alarms, alarm.path(), [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.path();}) != alarms.end();
 				}
 				// If it is active, we'll look into whether there already is an identical one.
-				return std::ranges::find(alarms, alarm, &LeafNode::AlarmWithTimestamp::alarm) == alarms.end();
+				return std::ranges::find(alarms, alarm, &SiteNode::AlarmWithTimestamp::alarm) == alarms.end();
 			} ()) {
 			changed_alarms.push_back(alarm);
 		}
@@ -96,7 +96,7 @@ auto update_alarms(auto& alarms, const auto& changed_alarms, const auto& timesta
 		alarms.erase(to_erase.begin(), to_erase.end());
 
 		if (changed_alarm.isActive()) {
-			alarms.emplace_back(LeafNode::AlarmWithTimestamp{
+			alarms.emplace_back(SiteNode::AlarmWithTimestamp{
 				.alarm = changed_alarm,
 				.timestamp = timestamp
 			});
@@ -104,7 +104,7 @@ auto update_alarms(auto& alarms, const auto& changed_alarms, const auto& timesta
 	}
 }
 
-LeafNode::LeafNode(const std::string& node_id, const std::string& journal_cache_dir, LogType log_type, ShvNode* parent)
+SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_dir, LogType log_type, ShvNode* parent)
 	: Super(node_id, parent)
 	, m_journalCacheDir(journal_cache_dir)
 	, m_logType(log_type)
@@ -207,7 +207,7 @@ LeafNode::LeafNode(const std::string& node_id, const std::string& journal_cache_
 
 }
 
-size_t LeafNode::methodCount(const StringViewList& shv_path)
+size_t SiteNode::methodCount(const StringViewList& shv_path)
 {
 	if (shv_path.empty()) {
 		if (m_logType == LogType::PushLog) {
@@ -221,7 +221,7 @@ size_t LeafNode::methodCount(const StringViewList& shv_path)
 	return Super::methodCount(shv_path);
 }
 
-const cp::MetaMethod* LeafNode::metaMethod(const StringViewList& shv_path, size_t index)
+const cp::MetaMethod* SiteNode::metaMethod(const StringViewList& shv_path, size_t index)
 {
 	if (shv_path.empty()) {
 		if (index >= methods.size()) {
@@ -237,7 +237,7 @@ const cp::MetaMethod* LeafNode::metaMethod(const StringViewList& shv_path, size_
 	return Super::metaMethod(shv_path, index);
 }
 
-qint64 LeafNode::calculateCacheDirSize() const
+qint64 SiteNode::calculateCacheDirSize() const
 {
 	journalDebug() << "Calculating cache directory size";
 	QDirIterator iter(QString::fromStdString(m_journalCacheDir), QDir::NoDotAndDotDot | QDir::Files, QDirIterator::Subdirectories);
@@ -251,7 +251,7 @@ qint64 LeafNode::calculateCacheDirSize() const
 	return total_size;
 }
 
-shv::chainpack::RpcValue LeafNode::getLog(const shv::core::utils::ShvGetLogParams& get_log_params)
+shv::chainpack::RpcValue SiteNode::getLog(const shv::core::utils::ShvGetLogParams& get_log_params)
 {
 	std::vector<std::function<shv::core::utils::ShvJournalFileReader()>> readers;
 	auto journal_dir = QDir(QString::fromStdString(m_journalCacheDir));
@@ -312,7 +312,7 @@ shv::chainpack::RpcValue LeafNode::getLog(const shv::core::utils::ShvGetLogParam
 	return shv::core::utils::getLog(readers, get_log_params, shv::chainpack::RpcValue::DateTime::now());
 }
 
-AlarmLog LeafNode::alarmLog(const shv::chainpack::RpcValue& params)
+AlarmLog SiteNode::alarmLog(const shv::chainpack::RpcValue& params)
 {
 	if (!params.isMap()) {
 		SHV_EXCEPTION("Expected a Map param");
@@ -342,7 +342,7 @@ AlarmLog LeafNode::alarmLog(const shv::chainpack::RpcValue& params)
 	get_log_params.withSnapshot = true;
 	auto log = shv::core::utils::ShvLogRpcValueReader(getLog(get_log_params));
 	AlarmLog alarm_log;
-	std::vector<LeafNode::AlarmWithTimestamp> current_snapshot;
+	std::vector<SiteNode::AlarmWithTimestamp> current_snapshot;
 	auto snapshot_saved = false;
 	while (log.next()) {
 		const auto& entry = log.entry();
@@ -368,7 +368,7 @@ AlarmLog LeafNode::alarmLog(const shv::chainpack::RpcValue& params)
 	return alarm_log;
 }
 
-shv::chainpack::RpcValue LeafNode::callMethod(const StringViewList& shv_path, const std::string& method, const shv::chainpack::RpcValue& params, const shv::chainpack::RpcValue& user_id)
+shv::chainpack::RpcValue SiteNode::callMethod(const StringViewList& shv_path, const std::string& method, const shv::chainpack::RpcValue& params, const shv::chainpack::RpcValue& user_id)
 {
 	if (method == M_PUSH_LOG && m_logType == LogType::PushLog) {
 		m_pushLogDebugLog.clear();

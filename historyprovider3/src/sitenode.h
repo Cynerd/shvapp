@@ -10,7 +10,7 @@
 
 struct AlarmLog;
 
-class LeafNode : public shv::iotqt::node::ShvNode
+class SiteNode : public shv::iotqt::node::ShvNode
 {
 	Q_OBJECT
 
@@ -19,7 +19,7 @@ class LeafNode : public shv::iotqt::node::ShvNode
 public:
 	static constexpr auto M_ALARM_LOG = "alarmLog";
 
-	LeafNode(const std::string& node_id, const std::string& journal_cache_dir, const LogType log_type, ShvNode* parent = nullptr);
+	SiteNode(const std::string& node_id, const std::string& journal_cache_dir, const LogType log_type, ShvNode* parent = nullptr);
 
 	size_t methodCount(const StringViewList& shv_path) override;
 	const shv::chainpack::MetaMethod* metaMethod(const StringViewList& shv_path, size_t ix) override;
@@ -49,14 +49,14 @@ private:
 };
 
 struct AlarmLog {
-	std::vector<LeafNode::AlarmWithTimestamp> snapshot;
-	std::vector<LeafNode::AlarmWithTimestamp> events;
+	std::vector<SiteNode::AlarmWithTimestamp> snapshot;
+	std::vector<SiteNode::AlarmWithTimestamp> events;
 
 	shv::chainpack::RpcValue toRpcValue() const
 	{
 		auto asList = [] (const auto& input) {
 			shv::chainpack::RpcValue::List ret;
-			std::ranges::transform(input, std::back_inserter(ret), &LeafNode::AlarmWithTimestamp::toRpcValue);
+			std::ranges::transform(input, std::back_inserter(ret), &SiteNode::AlarmWithTimestamp::toRpcValue);
 			return ret;
 		};
 

@@ -1,6 +1,6 @@
 add_library(libhistoryprovider STATIC
     src/appclioptions.cpp
-    src/leafnode.cpp
+    src/sitenode.cpp
     src/historyapp.cpp
     src/shvjournalnode.cpp
     src/valuecachenode.cpp
