@@ -653,7 +653,13 @@ public:
 					continue;
 				}
 
-				if (shv::core::utils::ShvJournalFileReader::fileNameToFileMsec(file_name.toStdString()) < newest_file_name_ms) {
+				auto parsed_file_ms = shv::core::utils::ShvJournalFileReader::fileNameToFileMsec(file_name.toStdString(), false);
+				if (parsed_file_ms == -1) {
+					journalWarning() << "Skipping file" << file_name << "and any after it, because it has an invalid filename";
+					break;
+				}
+
+				if (parsed_file_ms < newest_file_name_ms) {
 					journalDebug() << "Skipping" << file_name << "because it's older than our newest file" << newest_file_name;
 					continue;
 				}
