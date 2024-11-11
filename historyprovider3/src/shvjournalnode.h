@@ -15,7 +15,7 @@ class ShvJournalNode : public shv::iotqt::node::LocalFSNode
 	using Super = shv::iotqt::node::LocalFSNode;
 
 public:
-	ShvJournalNode(const std::vector<SlaveHpInfo>& slave_hps, const std::set<std::string>& leaf_nodes, ShvNode* parent = nullptr);
+	ShvJournalNode(const std::vector<SlaveHpInfo>& slave_hps, const std::set<std::string>& site_nodes, ShvNode* parent = nullptr);
 
 	size_t methodCount(const StringViewList& shv_path) override;
 	const shv::chainpack::MetaMethod* metaMethod(const StringViewList& shv_path, size_t ix) override;

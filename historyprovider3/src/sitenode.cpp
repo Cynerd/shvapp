@@ -126,10 +126,15 @@ SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_
 		});
 
 		connect(ls_call, &shv::iotqt::rpc::RpcCall::result, this, [this, ls_call, files_path, alarm_load_timer] (const shv::chainpack::RpcValue& ls_result) {
-			const auto type_info_path = shv::core::utils::joinPath(files_path, "typeInfo.cpon");
+			std::string type_info_path;
 			ls_call->deleteLater();
+			const auto& list = ls_result.asList();
 
-			if (const auto& list = ls_result.asList(); std::ranges::find(list, "typeInfo.cpon") == list.end()) {
+			if (std::ranges::find(list, "typeInfo.cpon") != list.end()) {
+				type_info_path = shv::core::utils::joinPath(files_path, "typeInfo.cpon");
+			} else if (std::ranges::find(list, "nodesTree.cpon") != list.end()) {
+				type_info_path = shv::core::utils::joinPath(files_path, "nodesTree.cpon");
+			} else {
 				journalDebug() << "No typeInfo at" << files_path;
 				this->m_typeInfo.emplace<std::string>("This site doesn't support typeInfo.cpon");
 				return;
