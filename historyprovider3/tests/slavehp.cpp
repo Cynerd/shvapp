@@ -191,7 +191,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 		}
 
-		DOCTEST_SUBCASE("HP discards events from leaf nodes it doesn't know")
+		DOCTEST_SUBCASE("HP discards events from site nodes it doesn't know")
 		{
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				NOTIFY("shv/fin/hel/tram/hel002/some/unknown/leaf", "chng", true);

@@ -3,7 +3,7 @@
 #include "valuecachenode.h"
 #include "utils.h"
 #include "src/shvjournalnode.h"
-#include "src/leafnode.h"
+#include "src/sitenode.h"
 
 #include <shv/iotqt/rpc/rpccall.h>
 #include <shv/iotqt/rpc/deviceconnection.h>
@@ -16,6 +16,8 @@
 #include <shv/chainpack/cponreader.h>
 
 #include <shv/core/stringview.h>
+
+#include <QtConcurrentRun>
 
 #include <QDirIterator>
 #include <QTimer>
@@ -113,11 +115,11 @@ cp::RpcValue AppRootNode::callMethod(const StringViewList& shv_path, const std::
 	return Super::callMethod(shv_path, method, params, user_id);
 }
 
-LeafNode* HistoryApp::leafNode(const std::string& path)
+SiteNode* HistoryApp::siteNode(const std::string& path)
 {
-	auto it = std::ranges::find(m_leafNodes, path, [] (const auto& node) { return node->shvPath().asString(); });
-	if (it == m_leafNodes.end()) {
-		throw std::logic_error("LeafNode " + path + " not found");
+	auto it = std::ranges::find(m_siteNodes, path, [] (const auto& node) { return node->shvPath().asString(); });
+	if (it == m_siteNodes.end()) {
+		throw std::logic_error("SiteNode " + path + " not found");
 	}
 
 	return *it;
@@ -184,7 +186,62 @@ enum class SlaveFound {
 	No
 };
 
-void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map& tree, const QString& node_name, std::string journal_cache_dir, std::vector<SlaveHpInfo>& slave_hps, std::set<std::string>& leaf_nodes, SlaveFound slave_found)
+const cp::MetaMethod ALARM_LOG_METHOD{SiteNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List", cp::AccessLevel::Read, {}, "Desc"};
+class AggregateNode : public shv::iotqt::node::ShvNode {
+	Q_OBJECT
+
+public:
+	using shv::iotqt::node::ShvNode::ShvNode;
+	size_t methodCount(const StringViewList& shv_path) override
+	{
+		return ShvNode::methodCount(shv_path) + 1;
+	}
+
+	const cp::MetaMethod* metaMethod(const StringViewList& shv_path, size_t index) override
+	{
+		if (index >= ShvNode::methodCount(shv_path)) {
+			return &ALARM_LOG_METHOD;
+		}
+
+		return ShvNode::metaMethod(shv_path, index);
+	}
+
+	shv::chainpack::RpcValue callMethodRq(const shv::chainpack::RpcRequest &rq) override
+	{
+		if (rq.method() == SiteNode::M_ALARM_LOG) {
+			QtConcurrent::run([this, rq] {
+				const auto site_nodes = this->findChildren<SiteNode*>();
+				AlarmLog res_log;
+				for (const auto& site_node : site_nodes) {
+					auto log = site_node->alarmLog(rq.params());
+					auto add_path_prefix = [site_node] (auto& alarms) {
+						for (auto& alarm_with_ts : alarms) {
+							alarm_with_ts.alarm.setPath(shv::core::utils::joinPath(site_node->shvPath().asString(), alarm_with_ts.alarm.path()));
+						}
+					};
+					add_path_prefix(log.snapshot);
+					add_path_prefix(log.events);
+					std::ranges::copy(log.snapshot, std::back_inserter(res_log.snapshot));
+					std::ranges::copy(log.events, std::back_inserter(res_log.events));
+				}
+
+				std::ranges::sort(res_log.events, [] (const auto& a, const auto& b) {
+					return a.timestamp < b.timestamp;
+				});
+
+				HistoryApp::instance()->rpcConnection()->sendResponse(rq.requestId(), res_log.toRpcValue());
+			}).then(this, [this] {
+				shvDebug() << "Aggregate get log on" << shvPath() << "done";
+			});
+
+			return {};
+		}
+
+		return shv::iotqt::node::ShvNode::callMethodRq(rq);
+	}
+};
+
+void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map& tree, const QString& node_name, std::string journal_cache_dir, std::vector<SlaveHpInfo>& slave_hps, std::set<std::string>& site_nodes, SlaveFound slave_found)
 {
 	shv::iotqt::node::ShvNode* node;
 	// We don't want a "shv" directory in out directory tree.
@@ -202,18 +259,18 @@ void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map&
 			meta_node.hasKey("HP") ? LogType::Legacy :
 			LogType::Normal;
 
-		bool is_leaf = meta_node.hasKey("HP") || meta_node.value("HP3").asMap().value("type", "device").asString() == "device";
-		std::string leaf_sync_path;
-		if (is_leaf) {
-			leaf_sync_path = meta_node.value("HP3").asMap().value("syncPath", ".app/history").asString();
-			node = new LeafNode(node_name.toStdString(), journal_cache_dir, log_type, parent_node);
+		bool is_site = meta_node.hasKey("HP") || meta_node.value("HP3").asMap().value("type", "device").asString() == "device";
+		std::string site_sync_path;
+		if (is_site) {
+			site_sync_path = meta_node.value("HP3").asMap().value("syncPath", ".app/history").asString();
+			node = new SiteNode(node_name.toStdString(), journal_cache_dir, log_type, parent_node);
 		} else {
-			node = new shv::iotqt::node::ShvNode(node_name.toStdString(), parent_node);
+			node = new AggregateNode(node_name.toStdString(), parent_node);
 		}
 
 		auto log_source_shv_path = shv::core::utils::joinPath(std::string{"shv"}, node->shvPath().asString());
-		if (is_leaf) {
-			leaf_nodes.insert(log_source_shv_path);
+		if (is_site) {
+			site_nodes.insert(log_source_shv_path);
 		}
 
 		if (slave_found != SlaveFound::Yes) {
@@ -221,13 +278,13 @@ void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map&
 			slave_hps.push_back(SlaveHpInfo {
 				.log_type = log_type,
 				.shv_path = log_source_shv_path,
-				.leaf_sync_path = leaf_sync_path,
+				.site_sync_path = site_sync_path,
 				.cache_dir_path = QString::fromStdString(journal_cache_dir)
 			});
 		}
 
 	} else {
-		node = new shv::iotqt::node::ShvNode(node_name.toStdString(), parent_node);
+		node = new AggregateNode(node_name.toStdString(), parent_node);
 	}
 
 	for (const auto& [k, v] : tree) {
@@ -236,7 +293,7 @@ void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map&
 		}
 
 		if (v.type() == cp::RpcValue::Type::Map) {
-			createTree(node, v.asMap(), QString::fromStdString(k), journal_cache_dir, slave_hps, leaf_nodes, slave_found);
+			createTree(node, v.asMap(), QString::fromStdString(k), journal_cache_dir, slave_hps, site_nodes, slave_found);
 		}
 	}
 }
@@ -357,8 +414,8 @@ QFuture<void> HistoryApp::initializeShvTree()
 		}
 
 		std::vector<SlaveHpInfo> slave_hps;
-		std::set<std::string> leaf_nodes;
-		createTree(m_root, result.asMap(), "shv", cliOptions()->journalCacheRoot(), slave_hps, leaf_nodes, SlaveFound::No);
+		std::set<std::string> site_nodes;
+		createTree(m_root, result.asMap(), "shv", cliOptions()->journalCacheRoot(), slave_hps, site_nodes, SlaveFound::No);
 
 		auto conn = HistoryApp::instance()->rpcConnection();
 		conn->callMethodSubscribe("shv", shv::chainpack::Rpc::SIG_MOUNTED_CHANGED);
@@ -369,10 +426,10 @@ QFuture<void> HistoryApp::initializeShvTree()
 			}
 		}
 
-		m_shvJournalNode = new ShvJournalNode(slave_hps, leaf_nodes, m_root);
+		m_shvJournalNode = new ShvJournalNode(slave_hps, site_nodes, m_root);
 
-		m_leafNodes = m_shvTree->findChildren<LeafNode*>();
-		if (!m_leafNodes.empty()) {
+		m_siteNodes = m_shvTree->findChildren<SiteNode*>();
+		if (!m_siteNodes.empty()) {
 			m_sanitizerTimer = new QTimer(this);
 			connect(m_sanitizerTimer, &QTimer::timeout, m_shvJournalNode, &ShvJournalNode::sanitizeSize);
 			m_sanitizerTimer->start(m_cliOptions->journalSanitizerInterval() * 1000);
@@ -389,7 +446,7 @@ void HistoryApp::deinitializeShvTree()
 {
 	delete m_sanitizerTimer;
 	m_sanitizerTimer = nullptr;
-	m_leafNodes.clear();
+	m_siteNodes.clear();
 	delete m_shvTree;
 	m_shvTree = nullptr;
 }
@@ -436,3 +493,5 @@ QString HistoryApp::uptime() const
 		.arg(sec, 2, 10, QChar('0'))
 		.arg(ms, 3, 10, QChar('0'));
 }
+
+#include "historyapp.moc"

@@ -17,7 +17,7 @@ namespace shv { namespace chainpack { class RpcMessage; }}
 namespace shv { namespace iotqt { namespace rpc { class DeviceConnection; }}}
 namespace shv { namespace iotqt { namespace node { class ShvNodeTree; }}}
 
-class LeafNode;
+class SiteNode;
 class ShvJournalNode;
 class ValueCacheNode;
 
@@ -49,7 +49,7 @@ public:
 	void setTotalCacheSizeLimit(int64_t size_limit) {m_totalCacheSizeLimit = size_limit;}
 	ShvJournalNode* shvJournalNode() {return m_shvJournalNode;}
 	ValueCacheNode* valueCacheNode() {return m_valueCacheNode;}
-	LeafNode* leafNode(const std::string& path);
+	SiteNode* siteNode(const std::string& path);
 
 	AppCliOptions* cliOptions() {return m_cliOptions;}
 
@@ -70,7 +70,7 @@ private:
 	AppRootNode* m_root = nullptr;
 	bool m_isBrokerConnected = false;
 	int64_t m_totalCacheSizeLimit;
-	QList<LeafNode*> m_leafNodes;
+	QList<SiteNode*> m_siteNodes;
 	ShvJournalNode* m_shvJournalNode = nullptr;
 	ValueCacheNode* m_valueCacheNode = nullptr;
 	QTimer* m_sanitizerTimer = nullptr;

@@ -8,14 +8,18 @@
 #include <shv/iotqt/node/shvnode.h>
 #include <shv/iotqt/node/localfsnode.h>
 
-class LeafNode : public shv::iotqt::node::ShvNode
+struct AlarmLog;
+
+class SiteNode : public shv::iotqt::node::ShvNode
 {
 	Q_OBJECT
 
 	using Super = shv::iotqt::node::ShvNode;
 
 public:
-	LeafNode(const std::string& node_id, const std::string& journal_cache_dir, const LogType log_type, ShvNode* parent = nullptr);
+	static constexpr auto M_ALARM_LOG = "alarmLog";
+
+	SiteNode(const std::string& node_id, const std::string& journal_cache_dir, const LogType log_type, ShvNode* parent = nullptr);
 
 	size_t methodCount(const StringViewList& shv_path) override;
 	const shv::chainpack::MetaMethod* metaMethod(const StringViewList& shv_path, size_t ix) override;
@@ -30,6 +34,8 @@ public:
 
 	std::vector<shv::core::utils::ShvAlarm> alarms() const;
 
+	AlarmLog alarmLog(const shv::chainpack::RpcValue& params);
+
 private:
 	shv::chainpack::RpcValue getLog(const shv::core::utils::ShvGetLogParams& get_log_params);
 
@@ -41,3 +47,25 @@ private:
 
 	shv::core::utils::ShvAlarm::Severity m_overallAlarm = shv::core::utils::ShvAlarm::Severity::Invalid;
 };
+
+struct AlarmLog {
+	std::vector<SiteNode::AlarmWithTimestamp> snapshot;
+	std::vector<SiteNode::AlarmWithTimestamp> events;
+
+	shv::chainpack::RpcValue toRpcValue() const
+	{
+		auto asList = [] (const auto& input) {
+			shv::chainpack::RpcValue::List ret;
+			std::ranges::transform(input, std::back_inserter(ret), &SiteNode::AlarmWithTimestamp::toRpcValue);
+			return ret;
+		};
+
+		shv::chainpack::RpcValue::Map res{
+			{"snapshot", asList(snapshot)},
+			{"events", asList(events)},
+
+		};
+		return res;
+	}
+};
+

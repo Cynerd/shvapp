@@ -73,10 +73,10 @@ std::string get_cache_dir_path(const QString& cache_root, const StringType& slav
 
 }
 
-ShvJournalNode::ShvJournalNode(const std::vector<SlaveHpInfo>& slave_hps, const std::set<std::string>& leaf_nodes, ShvNode* parent)
+ShvJournalNode::ShvJournalNode(const std::vector<SlaveHpInfo>& slave_hps, const std::set<std::string>& site_nodes, ShvNode* parent)
 	: Super(QString::fromStdString(HistoryApp::instance()->cliOptions()->journalCacheRoot()), "_shvjournal", parent)
 	, m_slaveHps(slave_hps)
-	, m_leafNodes(leaf_nodes)
+	, m_siteNodes(site_nodes)
 	, m_cacheDirPath(QString::fromStdString(HistoryApp::instance()->cliOptions()->journalCacheRoot()))
 {
 	QDir(m_cacheDirPath).mkpath(".");
@@ -205,9 +205,9 @@ void ShvJournalNode::onRpcMessageReceived(const cp::RpcMessage &msg)
 						return;
 					}
 
-					auto longest_prefix = shv::core::utils::findLongestPrefix(m_leafNodes, path);
-					if (longest_prefix == m_leafNodes.end()) {
-						// We'll discard events that come from a leaf node we don't know about.
+					auto longest_prefix = shv::core::utils::findLongestPrefix(m_siteNodes, path);
+					if (longest_prefix == m_siteNodes.end()) {
+						// We'll discard events that come from a site node we don't know about.
 						return;
 					}
 					// get rid of the shv prefix
@@ -535,7 +535,7 @@ public:
 	FileSyncer(
 		ShvJournalNode* node,
 		const std::string& shv_path,
-		const std::string& leaf_sync_path,
+		const std::string& site_sync_path,
 		const QString& cache_dir_path,
 		const SyncType sync_type)
 		: QObject(node)
@@ -547,7 +547,7 @@ public:
 		journalInfo() << msg;
 		m_node->appendSyncStatus(m_shvPath, msg);
 		auto shvjournal_suffix =
-			sync_type == SyncType::Device ? leaf_sync_path : ".local/history/_shvjournal";
+			sync_type == SyncType::Device ? site_sync_path : ".local/history/_shvjournal";
 		auto shvjournal_shvpath = shv::coreqt::utils::joinPath(m_shvPath, shvjournal_suffix);
 
 		impl_doSync(m_shvPath, cache_dir_path, shvjournal_shvpath, "");
@@ -810,8 +810,8 @@ void ShvJournalNode::syncLog(const std::string& shv_path, const std::function<vo
 			m_syncInProgress[slave_hp_path_qstr] = false;
 		});
 
-		// We know all the leaf nodes, so let's check what's our sync type.
-		auto sync_type = m_leafNodes.contains(slave_hp.shv_path) ? FileSyncer::SyncType::Device : FileSyncer::SyncType::HP3;
+		// We know all the site nodes, so let's check what's our sync type.
+		auto sync_type = m_siteNodes.contains(slave_hp.shv_path) ? FileSyncer::SyncType::Device : FileSyncer::SyncType::HP3;
 
 		// We shouldn't sync pushlogs, if they're our directly connected device.
 		if (sync_type == FileSyncer::SyncType::Device && slave_hp.log_type == LogType::PushLog) {
@@ -823,7 +823,7 @@ void ShvJournalNode::syncLog(const std::string& shv_path, const std::function<vo
 		if (sync_type == FileSyncer::SyncType::Device && slave_hp.log_type == LogType::Legacy) {
 			all_synced.push_back((new LegacyFileSyncerImpl(this, slave_hp_path_qstr, slave_hp.cache_dir_path))->getFuture());
 		} else {
-			all_synced.push_back((new FileSyncer(this, slave_hp.shv_path, slave_hp.leaf_sync_path, slave_hp.cache_dir_path, sync_type))->getFuture());
+			all_synced.push_back((new FileSyncer(this, slave_hp.shv_path, slave_hp.site_sync_path, slave_hp.cache_dir_path, sync_type))->getFuture());
 		}
 	}
 
@@ -944,9 +944,9 @@ const std::vector<SlaveHpInfo>& ShvJournalNode::slaveHps() const
 	return m_slaveHps;
 }
 
-const std::set<std::string>& ShvJournalNode::leafNodes() const
+const std::set<std::string>& ShvJournalNode::siteNodes() const
 {
-	return m_leafNodes;
+	return m_siteNodes;
 }
 
 #include "shvjournalnode.moc"

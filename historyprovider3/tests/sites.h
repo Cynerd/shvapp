@@ -118,6 +118,26 @@ const auto one_device = R"(
 }
 )"_cpon;
 
+const auto two_sites_inside_some_node = R"(
+{
+  "_meta":{
+    "HP3":{"type": "HP3"}
+  },
+  "some_node": {
+    "site_one": {
+      "_meta":{
+        "HP3":{"syncPath":".app/shvjournal"}
+      },
+    },
+    "site_two": {
+      "_meta":{
+        "HP3":{"syncPath":".app/shvjournal"}
+      },
+    }
+  }
+}
+)"_cpon;
+
 const auto two_devices = R"(
 {
   "_meta":{
