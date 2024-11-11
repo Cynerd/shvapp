@@ -144,7 +144,7 @@ SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_
 			auto* read_call = shv::iotqt::rpc::RpcCall::create(HistoryApp::instance()->rpcConnection())
 				->setShvPath(type_info_path)
 				->setMethod("read")
-				->setTimeout(10000);
+				->setTimeout(60000);
 			connect(read_call, &shv::iotqt::rpc::RpcCall::error, this, [this, read_call, type_info_path] (const shv::chainpack::RpcError& read_error) {
 				read_call->deleteLater();
 				journalDebug() << "Retrieving" << type_info_path << "failed:" << read_error.toString();
