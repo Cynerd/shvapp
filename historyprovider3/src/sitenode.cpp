@@ -43,8 +43,8 @@ const auto M_ALARM_TABLE = "alarmTable";
 const auto M_ALARM_MOD = "alarmmod";
 
 const std::vector<cp::MetaMethod> alarm_methods {
-	{M_ALARM_TABLE,  cp::MetaMethod::Flag::None, {}, "List|String", cp::AccessLevel::Read, {{M_ALARM_MOD}}},
-	{SiteNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List|String", cp::AccessLevel::Read, {}, "Desc"},
+	{M_ALARM_TABLE,  cp::MetaMethod::Flag::None, {}, "List", cp::AccessLevel::Read, {{M_ALARM_MOD}}},
+	{SiteNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List", cp::AccessLevel::Read, {}, "Desc"},
 	{M_OVERALL_ALARM, cp::MetaMethod::Flag::IsGetter, {}, "Int", cp::AccessLevel::Read, {{cp::Rpc::SIG_VAL_CHANGED}}},
 };
 }

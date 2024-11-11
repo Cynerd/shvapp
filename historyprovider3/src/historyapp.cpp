@@ -186,7 +186,7 @@ enum class SlaveFound {
 	No
 };
 
-const cp::MetaMethod ALARM_LOG_METHOD{SiteNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List|String", cp::AccessLevel::Read, {}, "Desc"};
+const cp::MetaMethod ALARM_LOG_METHOD{SiteNode::M_ALARM_LOG,  cp::MetaMethod::Flag::None, "Map", "List", cp::AccessLevel::Read, {}, "Desc"};
 class AggregateNode : public shv::iotqt::node::ShvNode {
 	Q_OBJECT
 
