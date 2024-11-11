@@ -214,8 +214,11 @@ size_t SiteNode::methodCount(const StringViewList& shv_path)
 			return methods.size() + push_log_methods.size();
 		}
 
-		return methods.size() + alarm_methods.size();
+		if (std::holds_alternative<shv::core::utils::ShvTypeInfo>(m_typeInfo)) {
+			return methods.size() + alarm_methods.size();
+		}
 
+		return methods.size();
 	}
 
 	return Super::methodCount(shv_path);
