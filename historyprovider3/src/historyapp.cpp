@@ -213,7 +213,19 @@ public:
 				const auto site_nodes = this->findChildren<SiteNode*>();
 				AlarmLog res_log;
 				for (const auto& site_node : site_nodes) {
-					auto log = site_node->alarmLog(rq.params());
+					AlarmLog log;
+					try {
+						log = site_node->alarmLog(rq.params());
+					} catch (shv::core::Exception& ex) {
+						auto resp = rq.makeResponse();
+						resp.setError(shv::chainpack::RpcError(ex.what(), shv::chainpack::RpcError::ErrorCode::MethodCallException));
+						return resp;
+					} catch (std::exception& ex) {
+						shvError() << "Unexpected error when getting alarm log for" << site_node->shvPath() << "-" << ex.what();
+						auto resp = rq.makeResponse();
+						resp.setError(shv::chainpack::RpcError("Internal error when loading alarm log", shv::chainpack::RpcError::ErrorCode::InternalError));
+						return resp;
+					}
 					auto add_path_prefix = [site_node] (auto& alarms) {
 						for (auto& alarm_with_ts : alarms) {
 							alarm_with_ts.alarm.setPath(shv::core::utils::joinPath(site_node->shvPath().asString(), alarm_with_ts.alarm.path()));
@@ -229,9 +241,12 @@ public:
 					return a.timestamp < b.timestamp;
 				});
 
-				HistoryApp::instance()->rpcConnection()->sendResponse(rq.requestId(), res_log.toRpcValue());
-			}).then(this, [this] {
+				auto resp = rq.makeResponse();
+				resp.setResult(res_log.toRpcValue());
+				return resp;
+			}).then(this, [this] (const QFuture<shv::chainpack::RpcResponse> & resp) {
 				shvDebug() << "Aggregate get log on" << shvPath() << "done";
+				HistoryApp::instance()->rpcConnection()->sendRpcMessage(resp.result());
 			});
 
 			return {};

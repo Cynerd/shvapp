@@ -322,6 +322,10 @@ shv::chainpack::RpcValue SiteNode::getLog(const shv::core::utils::ShvGetLogParam
 
 AlarmLog SiteNode::alarmLog(const shv::chainpack::RpcValue& params)
 {
+	if (std::holds_alternative<std::string>(m_typeInfo)) {
+		return {};
+	}
+
 	if (!params.isMap()) {
 		SHV_EXCEPTION("Expected a Map param");
 	}
