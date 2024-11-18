@@ -228,7 +228,7 @@ public:
 					}
 					auto add_path_prefix = [site_node] (auto& alarms) {
 						for (auto& alarm_with_ts : alarms) {
-							alarm_with_ts.alarm.setPath(shv::core::utils::joinPath(site_node->shvPath().asString(), alarm_with_ts.alarm.path()));
+							alarm_with_ts.alarm.path = shv::core::utils::joinPath(site_node->shvPath().asString(), alarm_with_ts.alarm.path);
 						}
 					};
 					add_path_prefix(log.snapshot);

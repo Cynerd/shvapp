@@ -14,7 +14,14 @@ using Severity = shv::core::utils::ShvAlarm::Severity;
 
 shv::core::utils::ShvAlarm make_alarm(const std::string& path, shv::core::utils::ShvAlarm::Severity severity = shv::core::utils::ShvAlarm::Severity::Error, bool is_active = true)
 {
-	return shv::core::utils::ShvAlarm(path, is_active, severity, 0, "Alarm 1", "Alarm 1 label");
+	return shv::core::utils::ShvAlarm{
+		.path = path,
+		.isActive = is_active,
+		.description = "Alarm 1",
+		.label = "Alarm 1 label",
+		.level = 0,
+		.severity = severity,
+	};
 }
 
 QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
