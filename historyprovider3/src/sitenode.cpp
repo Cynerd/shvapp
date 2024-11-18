@@ -68,9 +68,9 @@ auto get_changed_alarms(const auto& alarms, const auto& type_info, const auto& s
 	std::vector<shv::core::utils::ShvAlarm> changed_alarms;
 	for (const auto &alarm : shv::core::utils::ShvAlarm::checkAlarms(std::get<shv::core::utils::ShvTypeInfo>(type_info), shv_path, value)) {
 		if ([&alarms, alarm] {
-				if (!alarm.isActive()) {
+				if (!alarm.isActive) {
 					// If the alarm is not active, we'll try to find a current active one with the same path.
-					return std::ranges::find(alarms, alarm.path(), [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.path();}) != alarms.end();
+					return std::ranges::find(alarms, alarm.path, [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.path;}) != alarms.end();
 				}
 				// If it is active, we'll look into whether there already is an identical one.
 				return std::ranges::find(alarms, alarm, &SiteNode::AlarmWithTimestamp::alarm) == alarms.end();
@@ -90,12 +90,12 @@ auto update_alarms(auto& alarms, const auto& changed_alarms, const auto& timesta
 
 	for (const auto& changed_alarm : changed_alarms) {
 		auto to_erase = std::ranges::remove_if(alarms, [&changed_alarm] (const auto& alarm_with_ts) {
-			return alarm_with_ts.alarm.path() == changed_alarm.path();
+			return alarm_with_ts.alarm.path == changed_alarm.path;
 		});
 
 		alarms.erase(to_erase.begin(), to_erase.end());
 
-		if (changed_alarm.isActive()) {
+		if (changed_alarm.isActive) {
 			alarms.emplace_back(SiteNode::AlarmWithTimestamp{
 				.alarm = changed_alarm,
 				.timestamp = timestamp
@@ -169,10 +169,10 @@ SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_
 
 					update_alarms(m_alarms, changed_alarms, timestamp);
 
-					std::ranges::sort(m_alarms, std::less<shv::core::utils::ShvAlarm::Severity>{}, [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.severity();});
+					std::ranges::sort(m_alarms, std::less<shv::core::utils::ShvAlarm::Severity>{}, [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.severity;});
 					HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ALARM_MOD);
 
-					auto new_overall_alarm = m_alarms.empty() ? shv::core::utils::ShvAlarm::Severity::Invalid : m_alarms.front().alarm.severity();
+					auto new_overall_alarm = m_alarms.empty() ? shv::core::utils::ShvAlarm::Severity::Invalid : m_alarms.front().alarm.severity;
 					if (new_overall_alarm != m_overallAlarm) {
 						m_overallAlarm = new_overall_alarm;
 						HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString() + ":" +  M_OVERALL_ALARM, cp::Rpc::SIG_VAL_CHANGED, static_cast<int>(m_overallAlarm));
