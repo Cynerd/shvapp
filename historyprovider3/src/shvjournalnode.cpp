@@ -748,9 +748,14 @@ private:
 		QString full_file_name;
 	};
 
-	void downloadNext()
+	enum class FileReadParamApi {
+		Map,
+		List,
+	};
+
+	void downloadNext(std::optional<FileReadParamApi> file_read_param_api = {})
 	{
-		if (m_downloadQueue.empty()) {
+		auto finish = [this] {
 			writeFiles();
 
 			for (const auto& dir_path : m_toTrim) {
@@ -762,7 +767,34 @@ private:
 			m_promise.finish();
 			deleteLater();
 			return;
+		};
+
+		if (m_downloadQueue.empty()) {
+			finish();
+			return;
 		}
+
+		if (!file_read_param_api.has_value()) {
+			journalDebug() << "Detecting file:read parm API for:" << m_shvPath.toStdString();
+			auto call = shv::iotqt::rpc::RpcCall::create(HistoryApp::instance()->rpcConnection())
+				->setShvPath(m_downloadQueue.front().call->shvPath())
+				->setMethod("dir")
+				->setParams("sha1");
+			call->setParent(m_node);
+
+			connect(call, &shv::iotqt::rpc::RpcCall::maybeResult, this, [this, finish] (const auto& dir_result, const auto& error) {
+				if (error.isValid()) {
+					journalWarning() << "Couldn't retrieve file:read param API for:" << m_shvPath.toStdString();
+					finish();
+					return;
+				}
+
+				downloadNext(dir_result.isIMap() ? FileReadParamApi::List : FileReadParamApi::Map);
+			});
+			call->start();
+			return;
+		}
+
 		journalDebug() << "Downloading next file for" << m_shvPath.toStdString();
 		auto next = m_downloadQueue.front();
 		if (next.remote_size == 0) {
@@ -772,7 +804,7 @@ private:
 			m_downloadedFiles.insert(next.full_file_name, shv::chainpack::RpcValue::Blob{});
 			next.call->deleteLater();
 			m_downloadQueue.pop_front();
-			downloadNext();
+			downloadNext(file_read_param_api);
 			return;
 		}
 

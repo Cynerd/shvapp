@@ -157,6 +157,11 @@ shv::chainpack::RpcValue make_sub_params(const std::string& path, const std::str
 	RESPOND(true); \
 }
 
+#define ENABLE_MAP_FILE_API(path) { \
+	EXPECT_REQUEST(path, "dir", "sha1"); \
+	RESPOND_YIELD(shv::chainpack::RpcValue{nullptr}); \
+}
+
 #define EXPECT_SUBSCRIPTION_YIELD(path, method) { \
 	EXPECT_REQUEST(".broker/app", "subscribe", make_sub_params(path, method)); \
 	RESPOND_YIELD(true); \
