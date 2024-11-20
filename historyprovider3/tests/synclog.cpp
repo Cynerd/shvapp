@@ -98,6 +98,11 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					{ "2022-07-07T18-06-15-557.log2", "f", dummy_logfile.size() }
 				}})));
 			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2");
+			});
+
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_0);
 				RESPOND_YIELD(RpcValue::stringToBlob(dummy_logfile));
@@ -130,6 +135,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 
 			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2");
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2", "read", read_offset_0);
 				RESPOND_YIELD(RpcValue::stringToBlob(dummy_logfile));
 			});
@@ -156,6 +165,11 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					RpcValue::List{ "2022-07-05T18-06-15-557.log2", "f", 0ULL },
 					RpcValue::List{ "2022-07-07T18-06-15-557.log2", "f", dummy_logfile.size() }
 				}})));
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				// The empty file is skipped, but it is still used to detect the API.
+				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/2022-07-05T18-06-15-557.log2");
 			});
 
 			enqueue(res, [=] (MockRpcConnection* mock) {
@@ -267,6 +281,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				RESPOND_YIELD((RpcValue::List({{
 					{ "2022-07-07T18-06-15-000.log2", "f", dummy_logfile.size() }
 				}})));
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2");
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2", "read", read_offset_0);

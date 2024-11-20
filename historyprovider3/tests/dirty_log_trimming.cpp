@@ -73,6 +73,11 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			EXPECT_REQUEST("shv/two/.app/shvjournal", "lsfiles", ls_size_true);
 			RESPOND_YIELD(RpcValue::List());
 		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			ENABLE_MAP_FILE_API("shv/one/.app/shvjournal/2022-07-07T18-06-15-557.log2");
+		});
+
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_REQUEST("shv/one/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_0);
 			RESPOND_YIELD(RpcValue::stringToBlob(dummy_logfile2));
@@ -113,6 +118,11 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			EXPECT_REQUEST("shv/two/.app/shvjournal", "lsfiles", ls_size_true);
 			RESPOND_YIELD(RpcValue::List());
 		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			ENABLE_MAP_FILE_API("shv/one/.app/shvjournal/2022-07-07T18-06-15-557.log2");
+		});
+
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_RESPONSE(R"(["shv/one", "shv/two"])"_cpon);
 		});
@@ -136,6 +146,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_REQUEST("shv/two/.app/shvjournal", "lsfiles", ls_size_true);
 			RESPOND_YIELD(RpcValue::List());
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			ENABLE_MAP_FILE_API("shv/one/.app/shvjournal/2022-07-07T18-06-15-557.log2");
 		});
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_REQUEST("shv/one/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_0);
