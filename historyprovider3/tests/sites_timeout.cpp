@@ -29,10 +29,19 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		});
 		enqueue(res, [] (MockRpcConnection* mock) {
 			EXPECT_REQUEST("sites", "getSites", RpcValue());
-			RESPOND_YIELD(""); // Respond with empty sites to avoid leaks.
+			RESPOND_YIELD(mock_sites::some_site); // Respond with empty sites to avoid leaks.
 		});
 		enqueue(res, [] (MockRpcConnection* mock) {
-			EXPECT_SUBSCRIPTION("shv", "mntchng");
+			DISABLE_TYPEINFO("some_site");
+		});
+		enqueue(res, [] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+		});
+		enqueue(res, [] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv/some_site", "chng");
+		});
+		enqueue(res, [] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION("shv/some_site", "cmdlog");
 		});
 	}
 
@@ -40,10 +49,19 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 	{
 		enqueue(res, [] (MockRpcConnection* mock) {
 			EXPECT_REQUEST("sites", "getSites", RpcValue());
-			RESPOND_YIELD("");
+			RESPOND_YIELD(mock_sites::some_site);
 		});
 		enqueue(res, [] (MockRpcConnection* mock) {
-			EXPECT_SUBSCRIPTION("shv", "mntchng");
+			DISABLE_TYPEINFO("some_site");
+		});
+		enqueue(res, [] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+		});
+		enqueue(res, [] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv/some_site", "chng");
+		});
+		enqueue(res, [] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION("shv/some_site", "cmdlog");
 			REQUEST_YIELD("", "reloadSites");
 		});
 
@@ -55,7 +73,19 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		DOCTEST_SUBCASE("normal operation")
 		{
 			enqueue(res, [] (MockRpcConnection* mock) {
-				RESPOND_YIELD("");
+				RESPOND_YIELD(mock_sites::some_site);
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				DISABLE_TYPEINFO("some_site");
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv/some_site", "chng");
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION("shv/some_site", "cmdlog");
 			});
 		}
 
@@ -65,18 +95,26 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				REQUEST_YIELD("", "reloadSites");
 			});
 			enqueue(res, [] (MockRpcConnection* mock) {
-				RESPOND_YIELD("");
+				RESPOND_YIELD(mock_sites::some_site);
 			});
 			enqueue(res, [] (MockRpcConnection* mock) {
 				EXPECT_ERROR("MethodCallException: Sites are already being reloaded.");
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				DISABLE_TYPEINFO("some_site");
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv/some_site", "chng");
+			});
+			enqueue(res, [] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION("shv/some_site", "cmdlog");
 				return CallNext::Yes;
 			});
 		}
 
-
-		enqueue(res, [] (MockRpcConnection* mock) {
-			EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
-		});
 		enqueue(res, [] (MockRpcConnection* mock) {
 			EXPECT_RESPONSE("Sites reloaded.");
 		});
