@@ -211,7 +211,7 @@ public:
 		if (rq.method() == SiteNode::M_ALARM_LOG) {
 			QtConcurrent::run([this, rq] {
 				const auto site_nodes = this->findChildren<SiteNode*>();
-				AlarmLog res_log;
+				shv::chainpack::RpcValue::Map res_log;
 				for (const auto& site_node : site_nodes) {
 					AlarmLog log;
 					try {
@@ -233,16 +233,11 @@ public:
 					};
 					add_path_prefix(log.snapshot);
 					add_path_prefix(log.events);
-					std::ranges::copy(log.snapshot, std::back_inserter(res_log.snapshot));
-					std::ranges::copy(log.events, std::back_inserter(res_log.events));
+					res_log.merge(log.toRpcValue());
 				}
 
-				std::ranges::sort(res_log.events, [] (const auto& a, const auto& b) {
-					return a.timestamp < b.timestamp;
-				});
-
 				auto resp = rq.makeResponse();
-				resp.setResult(res_log.toRpcValue());
+				resp.setResult(std::move(res_log));
 				return resp;
 			}).then(this, [this] (const QFuture<shv::chainpack::RpcResponse> & resp) {
 				shvDebug() << "Aggregate get log on" << shvPath() << "done";
