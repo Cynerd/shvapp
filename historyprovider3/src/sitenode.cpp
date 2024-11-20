@@ -353,7 +353,11 @@ AlarmLog SiteNode::alarmLog(const shv::chainpack::RpcValue& params)
 	get_log_params.until = until.toDateTime();
 	get_log_params.withSnapshot = true;
 	auto log = shv::core::utils::ShvLogRpcValueReader(getLog(get_log_params));
-	AlarmLog alarm_log;
+	AlarmLog alarm_log{
+		.site = shvPath().asString(),
+		.snapshot = {},
+		.events = {},
+	};
 	std::vector<SiteNode::AlarmWithTimestamp> current_snapshot;
 	auto snapshot_saved = false;
 	while (log.next()) {

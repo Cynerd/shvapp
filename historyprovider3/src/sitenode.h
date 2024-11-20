@@ -49,10 +49,11 @@ private:
 };
 
 struct AlarmLog {
+	std::string site;
 	std::vector<SiteNode::AlarmWithTimestamp> snapshot;
 	std::vector<SiteNode::AlarmWithTimestamp> events;
 
-	shv::chainpack::RpcValue toRpcValue() const
+	shv::chainpack::RpcValue::Map toRpcValue() const
 	{
 		auto asList = [] (const auto& input) {
 			shv::chainpack::RpcValue::List ret;
@@ -61,9 +62,10 @@ struct AlarmLog {
 		};
 
 		shv::chainpack::RpcValue::Map res{
-			{"snapshot", asList(snapshot)},
-			{"events", asList(events)},
-
+			{site, shv::chainpack::RpcValue::Map {
+				{"snapshot", asList(snapshot)},
+				{"events", asList(events)},
+			}}
 		};
 		return res;
 	}
