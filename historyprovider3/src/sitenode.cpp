@@ -373,8 +373,8 @@ AlarmLog SiteNode::alarmLog(const shv::chainpack::RpcValue& params)
 
 			for (const auto& changed_alarm : changed_alarms) {
 				alarm_log.events.emplace_back(AlarmWithTimestamp{
-					.alarm=changed_alarm,
-						.timestamp=entry.dateTime()
+					.alarm = changed_alarm,
+					.timestamp = entry.dateTime()
 				});
 			}
 		}
