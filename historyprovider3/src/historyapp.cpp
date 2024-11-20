@@ -430,7 +430,11 @@ QFuture<void> HistoryApp::initializeShvTree()
 
 		std::vector<SlaveHpInfo> slave_hps;
 		std::set<std::string> site_nodes;
-		createTree(m_root, result.asMap(), "shv", cliOptions()->journalCacheRoot(), slave_hps, site_nodes, SlaveFound::No);
+		auto sites_root = result.asMap();
+		if (sites_root.value("_meta").asMap().value("HP3").asMap().value("type").asString() != "HP3") {
+			throw std::runtime_error("The site root node does NOT include an HP3 for this instance. Refusing to continue. Add an HP3 node to the site root node, otherwise this HP instance will not visible to parent HPs.");
+		}
+		createTree(m_root, sites_root, "shv", cliOptions()->journalCacheRoot(), slave_hps, site_nodes, SlaveFound::No);
 
 		auto conn = HistoryApp::instance()->rpcConnection();
 		conn->callMethodSubscribe("shv", shv::chainpack::Rpc::SIG_MOUNTED_CHANGED);
