@@ -666,7 +666,7 @@ public:
 
 				auto full_file_name = QDir(cache_dir_path).filePath(shv::coreqt::utils::joinPath(path_prefix, file_name));
 				QFile file(full_file_name);
-				auto local_size = file.size();
+				auto local_size = static_cast<int>(file.size());
 				auto remote_size = current_file.asList().at(LS_FILES_RESPONSE_FILESIZE).toInt();
 
 				auto sites_log_file = shv::coreqt::utils::joinPath(shvjournal_shvpath, file_name);
@@ -695,7 +695,6 @@ public:
 				auto call = shv::iotqt::rpc::RpcCall::create(HistoryApp::instance()->rpcConnection())
 					->setShvPath(sites_log_file)
 					->setMethod("read")
-					->setParams(cp::RpcValue::Map{{"offset", cp::RpcValue::Int(local_size)}})
 					->setTimeout(60000);
 				QtFuture::connect(call, &shv::iotqt::rpc::RpcCall::maybeResult).then([this, slave_hp_path, sites_log_file, full_file_name] (const std::tuple<shv::chainpack::RpcValue, shv::chainpack::RpcError>& result_or_error) {
 					auto [result, retrieve_error] = result_or_error;
@@ -728,6 +727,7 @@ public:
 				m_downloadQueue.push_back(DownloadJob{
 					.call = call,
 					.remote_size = remote_size,
+					.local_size = local_size,
 					.full_file_name = full_file_name
 				});
 			}
@@ -745,6 +745,7 @@ private:
 	struct DownloadJob {
 		shv::iotqt::rpc::RpcCall* call = nullptr;
 		int remote_size = 0;
+		int local_size = 0;
 		QString full_file_name;
 	};
 
@@ -808,6 +809,14 @@ private:
 			return;
 		}
 
+		switch (file_read_param_api.value()) {
+		case FileReadParamApi::Map:
+			next.call->setParams(cp::RpcValue::Map{{"offset", next.local_size}});
+			break;
+		case FileReadParamApi::List:
+			next.call->setParams(cp::RpcValue::List{next.local_size, next.remote_size - next.local_size});
+			break;
+		}
 		next.call->start();
 		m_downloadQueue.pop_front();
 	}
