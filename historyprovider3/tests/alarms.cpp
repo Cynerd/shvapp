@@ -579,20 +579,20 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					RpcValue::Map {
 						{"some_node/site_one", RpcValue::Map {
 							{"snapshot", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("some_node/site_one/one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
 							}},
 							{"events", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("some_node/site_one/one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
-								SiteNode::AlarmWithTimestamp{make_alarm("some_node/site_one/one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
 							}}
 						}},
 						{"some_node/site_two", RpcValue::Map {
 							{"snapshot", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("some_node/site_two/one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
 							}},
 							{"events", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("some_node/site_two/one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
-								SiteNode::AlarmWithTimestamp{make_alarm("some_node/site_two/one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
 							}}
 						}}
 					}
