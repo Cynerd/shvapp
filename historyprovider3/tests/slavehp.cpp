@@ -70,7 +70,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
-			RESPOND_YIELD(RpcValue::stringToBlob(dummy_logfile));
+			RESPOND_YIELD(make_read_response(dummy_logfile));
 		});
 	}
 
@@ -123,7 +123,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
-			RESPOND_YIELD(RpcValue::stringToBlob(dummy_logfile));
+			RESPOND_YIELD(make_read_response(dummy_logfile));
 		});
 	}
 
@@ -177,7 +177,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
-			RESPOND_YIELD(RpcValue::stringToBlob(dummy_logfile2));
+			RESPOND_YIELD(make_read_response(dummy_logfile2));
 		});
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
@@ -186,7 +186,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
-			RESPOND_YIELD(RpcValue::stringToBlob(dummy_logfile2));
+			RESPOND_YIELD(make_read_response(dummy_logfile2));
 		});
 	}
 
