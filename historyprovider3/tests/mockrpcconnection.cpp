@@ -18,6 +18,14 @@ shv::chainpack::RpcValue make_sub_params(const std::string& path, const std::str
 	return shv::chainpack::RpcValue::fromCpon(R"({"method":")" + method + R"(","path":")" + path + R"(","source": ""})");
 }
 
+shv::chainpack::RpcValue make_read_response(const std::string& dummy_logfile)
+{
+	auto blob = shv::chainpack::RpcValue(shv::chainpack::RpcValue::stringToBlob(dummy_logfile));
+	blob.setMetaValue("size", dummy_logfile.size());
+	blob.setMetaValue("offset", 0);
+	return blob;
+}
+
 shv::chainpack::RpcResponse MockRpcConnection::createResponse(const shv::chainpack::RpcValue& result)
 {
 	shv::chainpack::RpcResponse res;

@@ -696,17 +696,10 @@ public:
 					->setShvPath(sites_log_file)
 					->setMethod("read")
 					->setTimeout(60000);
-				QtFuture::connect(call, &shv::iotqt::rpc::RpcCall::maybeResult).then([this, slave_hp_path, sites_log_file, full_file_name] (const std::tuple<shv::chainpack::RpcValue, shv::chainpack::RpcError>& result_or_error) {
+				QtFuture::connect(call, &shv::iotqt::rpc::RpcCall::maybeResult).then([this, slave_hp_path, sites_log_file, full_file_name, local_size, remote_size] (const std::tuple<shv::chainpack::RpcValue, shv::chainpack::RpcError>& result_or_error) {
 					auto [result, retrieve_error] = result_or_error;
-					auto msg = sites_log_file.toStdString() + ": ";
-					if (retrieve_error.code() != shv::chainpack::RpcError::NoError) {
-						msg += retrieve_error.message();
-						journalError() << msg;
-						m_node->appendSyncStatus(slave_hp_path, msg);
-						auto site_path = std::filesystem::path{sites_log_file.toStdString()}.remove_filename();
-						msg = "Skipping all files from " + site_path.string() + " because " + sites_log_file.toStdString() + " download failed to finish";
-						journalWarning() << msg;
-						m_node->appendSyncStatus(slave_hp_path, msg);
+					auto site_path = std::filesystem::path{sites_log_file.toStdString()}.remove_filename();
+					auto skip_rest = [this, site_path] {
 						for (auto it = m_downloadQueue.begin(); it != m_downloadQueue.end(); /* nothing */) {
 							if (auto shv_path = (*it).call->shvPath(); shv_path.starts_with(site_path.c_str())) {
 								journalDebug() << "Skipping" << shv_path;
@@ -716,6 +709,24 @@ public:
 								++it;
 							}
 						}
+					};
+					auto msg = sites_log_file.toStdString() + ": ";
+					if (retrieve_error.code() != shv::chainpack::RpcError::NoError) {
+						msg += retrieve_error.message();
+						journalError() << msg;
+						m_node->appendSyncStatus(slave_hp_path, msg);
+						msg = "Skipping all files from " + site_path.string() + " because " + sites_log_file.toStdString() + " download failed to finish";
+						journalWarning() << msg;
+						m_node->appendSyncStatus(slave_hp_path, msg);
+						skip_rest();
+					} else if (result.metaValue("offset").toInt() != local_size || result.metaValue("size").toInt() != remote_size - local_size) {
+						msg += "got invalid size or offset, got offset: " + std::to_string(result.metaValue("offset").toInt()) + " expected offset: " + std::to_string(local_size) + " got size: " + std::to_string(result.metaValue("size").toInt()) + " expected size: " + std::to_string(remote_size - local_size);
+						m_node->appendSyncStatus(slave_hp_path, msg);
+						journalWarning() << msg;
+						msg = "Skipping all files from " + site_path.string() + " because " + sites_log_file.toStdString() + " had an expected offset and/or size";
+						m_node->appendSyncStatus(slave_hp_path, msg);
+						journalWarning() << msg;
+						skip_rest();
 					} else {
 						msg += "successfully synced";
 						m_downloadedFiles.insert(full_file_name, result);

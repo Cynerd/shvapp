@@ -69,6 +69,8 @@ const auto DRIVER_TIMEOUT = 3000;
 
 shv::chainpack::RpcValue make_sub_params(const std::string& path, const std::string& method);
 
+shv::chainpack::RpcValue make_read_response(const std::string& dummy_logfile);
+
 #define SETUP_TIMEOUT { \
 	mock->m_timeoutTimer = new QTimer(); \
 	QObject::connect(mock->m_timeoutTimer, &QTimer::timeout, [] {throw std::runtime_error("The test timed out while waiting for a message from client.");}); \
