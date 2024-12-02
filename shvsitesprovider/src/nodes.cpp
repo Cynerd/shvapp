@@ -614,8 +614,8 @@ shv::chainpack::RpcValue AppRootNode::readFile(const QString &shv_path)
 	if (!f.open(QFile::ReadOnly)) {
 		SHV_QT_EXCEPTION("Cannot open file " + filename);
 	}
-		QByteArray file_content = f.readAll();
-		return file_content.toStdString();
+	QByteArray file_content = f.readAll();
+	return cp::RpcValue::Blob(file_content.cbegin(), file_content.cend());
 }
 
 shv::chainpack::RpcValue AppRootNode::readFileCompressed(const shv::chainpack::RpcRequest &request)
