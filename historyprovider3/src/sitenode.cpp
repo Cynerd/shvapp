@@ -151,10 +151,17 @@ SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_
 				this->m_typeInfo.emplace<std::string>("Couldn't retrieve typeInfo.cpon for this site: " + read_error.toString());
 			});
 			connect(read_call, &shv::iotqt::rpc::RpcCall::result, this, [this, read_call, type_info_path, alarm_load_timer] (const shv::chainpack::RpcValue& read_result) {
+				if (!read_result.isBlob()) {
+					auto msg = std::string{"Couldn't retrieve typeInfo.cpon for this site: sitesprovider didn't typeinfo response wasn't a blob, it was: "} + read_result.typeName();
+					this->m_typeInfo.emplace<std::string>(msg);
+					journalWarning() << "Couldn't retrieve typeinfo for" << type_info_path << msg;
+					return;
+				}
+
 				read_call->deleteLater();
 				journalDebug() << "Retrieved" << type_info_path << "successfully";
 				std::string error;
-				this->m_typeInfo.emplace<shv::core::utils::ShvTypeInfo>(shv::core::utils::ShvTypeInfo::fromRpcValue(shv::chainpack::RpcValue::fromCpon(read_result.asString(), &error)));
+				this->m_typeInfo.emplace<shv::core::utils::ShvTypeInfo>(shv::core::utils::ShvTypeInfo::fromRpcValue(shv::chainpack::RpcValue::fromCpon(read_result.toString(), &error)));
 				if (!error.empty()) {
 					this->m_typeInfo.emplace<std::string>("Couldn't retrieve typeInfo.cpon for this site: " + error);
 					journalDebug() << "Couldn't parse typeinfo for" << type_info_path << error;
