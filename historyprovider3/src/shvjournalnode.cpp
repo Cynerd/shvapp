@@ -714,8 +714,8 @@ private:
 	struct DownloadJob {
 		QString slave_hp_path;
 		QString sites_log_file;
-		int remote_size = 0;
-		int local_size = 0;
+		int remote_size;
+		int local_size;
 		QString full_file_name;
 	};
 
