@@ -198,7 +198,7 @@ const auto some_site = R"(
 
 
 namespace mock_typeinfo {
-const auto one_device = R"EOF(
+const auto one_device = RpcValue::stringToBlob(R"EOF(
 <"version":4>{
 	"deviceDescriptions":{
 		"one_alarm_device":{
@@ -222,8 +222,8 @@ const auto one_device = R"EOF(
 		},
 	}
 }
-)EOF";
-const auto two_device = R"EOF(
+)EOF");
+const auto two_device = RpcValue::stringToBlob(R"EOF(
 <"version":4>{
 	"deviceDescriptions":{
 		"one_alarm_device":{
@@ -248,8 +248,8 @@ const auto two_device = R"EOF(
 		},
 	}
 }
-)EOF";
-const auto two_alarms = R"EOF(
+)EOF");
+const auto two_alarms = RpcValue::stringToBlob(R"EOF(
 <"version":4>{
 	"deviceDescriptions":{
 		"two_alarm_device":{
@@ -277,8 +277,8 @@ const auto two_alarms = R"EOF(
 		},
 	}
 }
-)EOF";
-const auto different_severity = R"EOF(
+)EOF");
+const auto different_severity = RpcValue::stringToBlob(R"EOF(
 <"version":4>{
 	"deviceDescriptions":{
 		"two_alarm_device":{
@@ -312,5 +312,5 @@ const auto different_severity = R"EOF(
 		},
 	}
 }
-)EOF";
+)EOF");
 }
