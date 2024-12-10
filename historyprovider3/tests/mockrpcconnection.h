@@ -69,7 +69,7 @@ const auto DRIVER_TIMEOUT = 3000;
 
 shv::chainpack::RpcValue make_sub_params(const std::string& path, const std::string& method);
 
-shv::chainpack::RpcValue make_read_response(const std::string& dummy_logfile);
+shv::chainpack::RpcValue make_read_response(const std::string& dummy_logfile, int offset = 0, const std::optional<int>& size = std::nullopt);
 
 #define SETUP_TIMEOUT { \
 	mock->m_timeoutTimer = new QTimer(); \

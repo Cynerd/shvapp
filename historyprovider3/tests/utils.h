@@ -155,6 +155,8 @@ const auto dummy_getlog_response = R"(
 ]
 )"_cpon;
 
+const auto very_large_log_file = QString("2022-07-07T18:06:17.784Z	809781	zone1/system/sig/plcDisconnected	false		chng	2	\n").repeated(50000).toStdString();
+
 const auto five_thousand_records_getlog_response = RpcValue::fromCpon((R"(
 <
   "dateTime":d"2022-09-15T13:30:04.293Z",
@@ -184,7 +186,12 @@ const auto five_thousand_records_getlog_response = RpcValue::fromCpon((R"(
 )").toStdString());
 
 const auto ls_size_true = R"({"size": true})"_cpon;
-const auto read_offset_0 = R"({"offset":0})"_cpon;
+const auto read_offset_with_size = [] (auto offset, auto size) {
+    return RpcValue{RpcValue::Map{
+      {"offset", offset},
+      {"size", size},
+    }};
+};
 const auto synclog_wait = [] (const auto& path) {
   auto ret =  R"({"waitForFinished": true})"_cpon.asMap();
   ret["shvPath"] = path;
