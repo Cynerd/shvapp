@@ -561,7 +561,7 @@ public:
 			QFile log_file(iter.key());
 			QFileInfo(log_file).dir().mkpath(".");
 			if (log_file.open(QFile::WriteOnly | QFile::Append)) {
-				auto blob = iter.value().asBlob();
+				const auto& blob = iter.value();
 				journalDebug() << "Writing" << iter.key();
 				log_file.write(reinterpret_cast<const char*>(blob.data()), static_cast<qsizetype>(blob.size()));
 			} else {
@@ -692,54 +692,12 @@ public:
 				}
 
 				journalDebug() << "Enqueuing" << sites_log_file << "offset:" << local_size;
-				auto call = shv::iotqt::rpc::RpcCall::create(HistoryApp::instance()->rpcConnection())
-					->setShvPath(sites_log_file)
-					->setMethod("read")
-					->setTimeout(60000);
-				QtFuture::connect(call, &shv::iotqt::rpc::RpcCall::maybeResult).then([this, slave_hp_path, sites_log_file, full_file_name, local_size, remote_size] (const std::tuple<shv::chainpack::RpcValue, shv::chainpack::RpcError>& result_or_error) {
-					auto [result, retrieve_error] = result_or_error;
-					auto site_path = std::filesystem::path{sites_log_file.toStdString()}.remove_filename();
-					auto skip_rest = [this, site_path] {
-						for (auto it = m_downloadQueue.begin(); it != m_downloadQueue.end(); /* nothing */) {
-							if (auto shv_path = (*it).call->shvPath(); shv_path.starts_with(site_path.c_str())) {
-								journalDebug() << "Skipping" << shv_path;
-								(*it).call->deleteLater();
-								it = m_downloadQueue.erase(it);
-							} else {
-								++it;
-							}
-						}
-					};
-					auto msg = sites_log_file.toStdString() + ": ";
-					if (retrieve_error.code() != shv::chainpack::RpcError::NoError) {
-						msg += retrieve_error.message();
-						journalError() << msg;
-						m_node->appendSyncStatus(slave_hp_path, msg);
-						msg = "Skipping all files from " + site_path.string() + " because " + sites_log_file.toStdString() + " download failed to finish";
-						journalWarning() << msg;
-						m_node->appendSyncStatus(slave_hp_path, msg);
-						skip_rest();
-					} else if (result.metaValue("offset").toInt() != local_size || result.metaValue("size").toInt() != remote_size - local_size) {
-						msg += "got invalid size or offset, got offset: " + std::to_string(result.metaValue("offset").toInt()) + " expected offset: " + std::to_string(local_size) + " got size: " + std::to_string(result.metaValue("size").toInt()) + " expected size: " + std::to_string(remote_size - local_size);
-						m_node->appendSyncStatus(slave_hp_path, msg);
-						journalWarning() << msg;
-						msg = "Skipping all files from " + site_path.string() + " because " + sites_log_file.toStdString() + " had an expected offset and/or size";
-						m_node->appendSyncStatus(slave_hp_path, msg);
-						journalWarning() << msg;
-						skip_rest();
-					} else {
-						msg += "successfully synced";
-						m_downloadedFiles.insert(full_file_name, result);
-						m_node->appendSyncStatus(slave_hp_path, msg);
-						journalInfo() << msg;
-					}
-					downloadNext();
-				});
 				m_downloadQueue.push_back(DownloadJob{
-					.call = call,
+					.slave_hp_path = slave_hp_path,
+					.sites_log_file = sites_log_file,
 					.remote_size = remote_size,
 					.local_size = local_size,
-					.full_file_name = full_file_name
+					.full_file_name = full_file_name,
 				});
 			}
 
@@ -754,10 +712,13 @@ public:
 private:
 
 	struct DownloadJob {
-		shv::iotqt::rpc::RpcCall* call = nullptr;
-		int remote_size = 0;
-		int local_size = 0;
+		QString slave_hp_path;
+		QString sites_log_file;
+		int remote_size;
+		int local_size;
 		QString full_file_name;
+
+		int downloaded = 0;
 	};
 
 	enum class FileReadParamApi {
@@ -789,7 +750,7 @@ private:
 		if (!file_read_param_api.has_value()) {
 			journalDebug() << "Detecting file:read parm API for:" << m_shvPath.toStdString();
 			auto call = shv::iotqt::rpc::RpcCall::create(HistoryApp::instance()->rpcConnection())
-				->setShvPath(m_downloadQueue.front().call->shvPath())
+				->setShvPath(m_downloadQueue.front().sites_log_file)
 				->setMethod("dir")
 				->setParams("sha1");
 			call->setParent(m_node);
@@ -807,29 +768,84 @@ private:
 			return;
 		}
 
-		journalDebug() << "Downloading next file for" << m_shvPath.toStdString();
-		auto next = m_downloadQueue.front();
-		if (next.remote_size == 0) {
-			auto msg = next.call->shvPath() + ": is an empty file, skipping read(), and creating it locally";
+		journalDebug() << "Downloading next file chunk for" << m_shvPath.toStdString();
+		auto current_download = m_downloadQueue.begin();
+
+		if (current_download->remote_size == 0) {
+			auto msg = current_download->sites_log_file + ": is an empty file, skipping read(), and creating it locally";
 			journalWarning() << msg;
-			m_node->appendSyncStatus(m_shvPath, msg);
-			m_downloadedFiles.insert(next.full_file_name, shv::chainpack::RpcValue::Blob{});
-			next.call->deleteLater();
+			m_node->appendSyncStatus(m_shvPath, msg.toStdString());
+			m_downloadedFiles.insert(current_download->full_file_name, shv::chainpack::RpcValue::Blob{});
 			m_downloadQueue.pop_front();
 			downloadNext(file_read_param_api);
 			return;
 		}
 
+		auto call = shv::iotqt::rpc::RpcCall::create(HistoryApp::instance()->rpcConnection())
+			->setShvPath(current_download->sites_log_file)
+			->setMethod("read")
+			->setTimeout(60000);
+
+		const auto FILE_CHUNK_LIMIT = 128 * 1000; // 128 kB (not KiB, just to be sure we're not over some 128 KiB limit, which I'm not sure exists, but Kupťa said "just to be sure")
+		const auto wanted_size = std::min(current_download->remote_size - current_download->local_size - current_download->downloaded, FILE_CHUNK_LIMIT);
+		const auto wanted_offset = current_download->local_size + current_download->downloaded;
+
+		QtFuture::connect(call, &shv::iotqt::rpc::RpcCall::maybeResult).then([this, file_read_param_api, current_download, wanted_size, wanted_offset] (const std::tuple<shv::chainpack::RpcValue, shv::chainpack::RpcError>& result_or_error) {
+			auto [result, retrieve_error] = result_or_error;
+			auto site_path = std::filesystem::path{current_download->sites_log_file.toStdString()}.remove_filename();
+			auto skip_rest = [this, site_path] {
+				for (auto it = m_downloadQueue.begin(); it != m_downloadQueue.end(); /* nothing */) {
+					if (auto shv_path = (*it).sites_log_file; shv_path.startsWith(site_path.c_str())) {
+						journalDebug() << "Skipping" << shv_path;
+						it = m_downloadQueue.erase(it);
+					} else {
+						++it;
+					}
+				}
+			};
+			auto msg = current_download->sites_log_file.toStdString() + ": ";
+			if (retrieve_error.code() != shv::chainpack::RpcError::NoError) {
+				msg += retrieve_error.message();
+				journalError() << msg;
+				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
+				msg = "Skipping all files from " + site_path.string() + " because " + current_download->sites_log_file.toStdString() + " download failed to finish";
+				journalWarning() << msg;
+				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
+				skip_rest();
+			} else if (result.metaValue("offset").toInt() != wanted_offset || result.metaValue("size").toInt() != wanted_size) {
+				msg += "got invalid size or offset, got offset: " + std::to_string(result.metaValue("offset").toInt()) + " expected offset: " + std::to_string(wanted_offset) + " got size: " + std::to_string(result.metaValue("size").toInt()) + " expected size: " + std::to_string(wanted_size);
+				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
+				journalWarning() << msg;
+				msg = "Skipping all files from " + site_path.string() + " because " + current_download->sites_log_file.toStdString() + " had an expected offset and/or size";
+				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
+				journalWarning() << msg;
+				skip_rest();
+			} else {
+				std::ranges::copy(result.asBlob(), std::back_inserter(m_downloadedFiles[current_download->full_file_name]));
+				current_download->downloaded += static_cast<int>(result.asBlob().size());
+				msg += "got chunk of size: ";
+				msg += std::to_string(result.asBlob().size());
+				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
+				journalInfo() << msg;
+				if (current_download->local_size + current_download->downloaded == current_download->remote_size) {
+					auto msg = current_download->sites_log_file.toStdString() + ": successfully synced";
+					m_node->appendSyncStatus(current_download->slave_hp_path, msg);
+					journalInfo() << msg;
+					m_downloadQueue.erase(current_download);
+				}
+			}
+			downloadNext(file_read_param_api);
+		});
+
 		switch (file_read_param_api.value()) {
 		case FileReadParamApi::Map:
-			next.call->setParams(cp::RpcValue::Map{{"offset", next.local_size}});
+			call->setParams(cp::RpcValue::Map{{"offset", wanted_offset}, {"size", wanted_size}});
 			break;
 		case FileReadParamApi::List:
-			next.call->setParams(cp::RpcValue::List{next.local_size, next.remote_size - next.local_size});
+			call->setParams(cp::RpcValue::List{wanted_offset, wanted_size});
 			break;
 		}
-		next.call->start();
-		m_downloadQueue.pop_front();
+		call->start();
 	}
 
 	ShvJournalNode* m_node;
@@ -838,7 +854,7 @@ private:
 
 	std::deque<DownloadJob> m_downloadQueue;
 
-	QMap<QString, cp::RpcValue> m_downloadedFiles;
+	QMap<QString, cp::RpcValue::Blob> m_downloadedFiles;
 	std::vector<QString> m_toTrim;
 	QPromise<void> m_promise;
 	int m_counter = 0;

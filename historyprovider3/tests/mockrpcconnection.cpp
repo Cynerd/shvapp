@@ -18,11 +18,11 @@ shv::chainpack::RpcValue make_sub_params(const std::string& path, const std::str
 	return shv::chainpack::RpcValue::fromCpon(R"({"method":")" + method + R"(","path":")" + path + R"(","source": ""})");
 }
 
-shv::chainpack::RpcValue make_read_response(const std::string& dummy_logfile)
+shv::chainpack::RpcValue make_read_response(const std::string& dummy_logfile, int offset, const std::optional<int>& size)
 {
-	auto blob = shv::chainpack::RpcValue(shv::chainpack::RpcValue::stringToBlob(dummy_logfile));
-	blob.setMetaValue("size", dummy_logfile.size());
-	blob.setMetaValue("offset", 0);
+	auto blob = shv::chainpack::RpcValue(shv::chainpack::RpcValue::stringToBlob(dummy_logfile.substr(offset, size.value_or(std::string::npos))));
+	blob.setMetaValue("size", blob.asBlob().size());
+	blob.setMetaValue("offset", offset);
 	return blob;
 }
 

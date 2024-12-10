@@ -69,7 +69,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		});
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
-			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
+			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_with_size(0, dummy_logfile.size()));
 			RESPOND_YIELD(make_read_response(dummy_logfile));
 		});
 	}
@@ -113,16 +113,12 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		});
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
-			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
+			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_with_size(0, dummy_logfile.size()));
 			RESPOND_ERROR_YIELD("Couldn't send this file.");
 		});
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
-			ENABLE_MAP_FILE_API(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"));
-		});
-
-		enqueue(res, [=] (MockRpcConnection* mock) {
-			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
+			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"), "read", read_offset_with_size(0, dummy_logfile.size()));
 			RESPOND_YIELD(make_read_response(dummy_logfile));
 		});
 	}
@@ -176,16 +172,12 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		});
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
-			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
+			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/opc/2022-07-07T18-06-15-557.log2"), "read", read_offset_with_size(0, dummy_logfile2.size()));
 			RESPOND_YIELD(make_read_response(dummy_logfile2));
 		});
 
 		enqueue(res, [=] (MockRpcConnection* mock) {
-			ENABLE_MAP_FILE_API(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"));
-		});
-
-		enqueue(res, [=] (MockRpcConnection* mock) {
-			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"), "read", read_offset_0);
+			EXPECT_REQUEST(join(slave_shv_journal_path, "eyas/app/2022-07-07T18-06-15-557.log2"), "read", read_offset_with_size(0, dummy_logfile2.size()));
 			RESPOND_YIELD(make_read_response(dummy_logfile2));
 		});
 	}

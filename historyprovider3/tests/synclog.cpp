@@ -91,7 +91,13 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					RpcValue::List{ "2022-07-07T18-06-15-557.log2", dummy_logfile.size() }
 				}});
 				*expected_sync_info = R"EOF({
-					"shv/eyas/opc": {"status": ["Syncing shv/eyas/opc via file synchronization", "shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)", "shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced","Syncing done"]}
+					"shv/eyas/opc": {"status": [
+						"Syncing shv/eyas/opc via file synchronization",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 308",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
+						"Syncing done"
+					]},
 					"shv/eyas/with_app_history": {"status": ["Unknown"]}
 				})EOF"_cpon;
 				RESPOND_YIELD((RpcValue::List({{
@@ -104,7 +110,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_0);
+				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(0, dummy_logfile.size()));
 				RESPOND_YIELD(make_read_response(dummy_logfile));
 			});
 		}
@@ -117,7 +123,13 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					RpcValue::List{ "subdir/2022-07-07T18-06-15-557.log2", dummy_logfile.size() }
 				}});
 				*expected_sync_info = R"EOF({
-					"shv/eyas/opc": {"status": ["Syncing shv/eyas/opc via file synchronization", "shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)","shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: successfully synced","Syncing done"]}
+					"shv/eyas/opc": {"status": [
+						"Syncing shv/eyas/opc via file synchronization",
+						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: got chunk of size: 308",
+						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: successfully synced",
+						"Syncing done"
+					]},
 					"shv/eyas/with_app_history": {"status": ["Unknown"]}
 				})EOF"_cpon;
 
@@ -139,7 +151,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2", "read", read_offset_0);
+				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(0, dummy_logfile.size()));
 				RESPOND_YIELD(make_read_response(dummy_logfile));
 			});
 		}
@@ -157,6 +169,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 						"shv/eyas/opc/.app/shvjournal/2022-07-05T18-06-15-557.log2: syncing (remote size: 0 local size: <doesn't exist>)",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
 						"shv/eyas/opc/.app/shvjournal/2022-07-05T18-06-15-557.log2: is an empty file, skipping read(), and creating it locally",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 308",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
 						"Syncing done"]}
 					"shv/eyas/with_app_history": {"status": ["Unknown"]}
@@ -173,7 +186,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_0);
+				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(0, dummy_logfile.size()));
 				RESPOND_YIELD(make_read_response(dummy_logfile));
 			});
 		}
@@ -272,7 +285,13 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					RpcValue::List{ "dirtylog", 0UL }
 				}});
 				*expected_sync_info = R"EOF({
-					"shv/eyas/opc": {"status": ["Syncing shv/eyas/opc via file synchronization", "shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: syncing (remote size: 308 local size: <doesn't exist>)", "shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: successfully synced", "Syncing done"]}
+					"shv/eyas/opc": {"status": [
+						"Syncing shv/eyas/opc via file synchronization",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: got chunk of size: 308",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: successfully synced",
+						"Syncing done"
+					]}
 					"shv/eyas/with_app_history": {"status": ["Unknown"]}
 				})EOF"_cpon;
 				create_dummy_cache_files(cache_dir_path, {
@@ -286,8 +305,78 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2");
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2", "read", read_offset_0);
+				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2", "read", read_offset_with_size(0, dummy_logfile.size()));
 				RESPOND_YIELD(make_read_response(dummy_logfile));
+			});
+		}
+
+		DOCTEST_SUBCASE("Chunk downloading")
+		{
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				create_dummy_cache_files(cache_dir_path, {});
+				*expected_cache_contents = RpcValue::List({{
+					RpcValue::List{ "2022-07-07T18-06-15-557.log2", very_large_log_file.size() }
+				}});
+				*expected_sync_info = R"EOF({
+					"shv/eyas/opc": {"status": [
+						"Syncing shv/eyas/opc via file synchronization",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 4000000 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 32000",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
+						"Syncing done"
+					]},
+					"shv/eyas/with_app_history": {"status": ["Unknown"]}
+				})EOF"_cpon;
+				RESPOND_YIELD((RpcValue::List({{
+					{ "2022-07-07T18-06-15-557.log2", "f", very_large_log_file.size() }
+				}})));
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2");
+			});
+
+			for (auto i = 0; i < 31; i++) {
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(i * 128000, 128000));
+					RESPOND_YIELD(make_read_response(very_large_log_file, i * 128000, 128000));
+				});
+			}
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(31 * 128000, 32000));
+				RESPOND_YIELD(make_read_response(very_large_log_file, 31 * 128000, 32000));
 			});
 		}
 
@@ -608,6 +697,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 		}
 	}
+
 	return res;
 }
 
