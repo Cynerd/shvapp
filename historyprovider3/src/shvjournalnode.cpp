@@ -645,9 +645,6 @@ public:
 			journalDebug() << "Newest file for" << shv::coreqt::utils::joinPath(slave_hp_path, path_prefix) << "is" << newest_file_name;
 
 			for (const auto& current_file : file_list.asList()) {
-				if (current_memory_usage > SYNCER_MEMORY_LIMIT) {
-					writeFiles();
-				};
 				auto file_name = QString::fromStdString(current_file.asList().at(LS_FILES_RESPONSE_FILENAME).asString());
 				if (file_name == DIRTY_FILENAME) {
 					continue;
@@ -823,6 +820,12 @@ private:
 			} else {
 				std::ranges::copy(result.asBlob(), std::back_inserter(m_downloadedFiles[current_download->full_file_name]));
 				current_download->downloaded += static_cast<int>(result.asBlob().size());
+
+				current_memory_usage += static_cast<int>(result.asBlob().size());
+				if (current_memory_usage > SYNCER_MEMORY_LIMIT) {
+					writeFiles();
+				}
+
 				msg += "got chunk of size: ";
 				msg += std::to_string(result.asBlob().size());
 				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
