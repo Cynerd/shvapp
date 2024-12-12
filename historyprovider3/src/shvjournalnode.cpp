@@ -809,7 +809,7 @@ private:
 				journalWarning() << msg;
 				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
 				skip_rest();
-			} else if (result.metaValue("offset").toInt() != wanted_offset || result.metaValue("size").toInt() > wanted_size) {
+			} else if (result.asBlob().size() > static_cast<unsigned>(wanted_size)) {
 				msg += "got invalid offset or more data than requested, got offset: " + std::to_string(result.metaValue("offset").toInt()) + " expected offset: " + std::to_string(wanted_offset) + " got size: " + std::to_string(result.metaValue("size").toInt()) + " expected size: " + std::to_string(wanted_size);
 				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
 				journalWarning() << msg;
