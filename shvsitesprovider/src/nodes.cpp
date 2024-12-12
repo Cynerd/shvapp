@@ -200,10 +200,10 @@ cp::RpcValue AppRootNode::callMethodRq(const cp::RpcRequest &rq)
 		return readFileCompressed(rq);
 	}
 	else if (method == METH_FILE_SIZE) {
-		return readFile(rq.shvPath().to<QString>()).asData().second;
+		return readFile(rq.shvPath().to<QString>()).asBlob().size();
 	}
 	else if (method == METH_FILE_SIZE_COMPRESSED) {
-		return readFileCompressed(rq).asData().second;
+		return readFileCompressed(rq).asBlob().size();
 	}
 	else if (method == METH_FILE_HASH) {
 		string bytes = readFile(qshv_path).toString();
@@ -627,9 +627,9 @@ shv::chainpack::RpcValue AppRootNode::readFileCompressed(const shv::chainpack::R
 	}
 
 	cp::RpcValue result;
-	const auto blob = readFile(request.shvPath().to<QString>()).asData();
+	const auto& blob = readFile(request.shvPath().to<QString>()).asBlob();
 	if (compression_type == CompressionType::QCompress) {
-		const auto compressed_blob = qCompress(QByteArray::fromRawData(blob.first, static_cast<int>(blob.second)));
+		const auto compressed_blob = qCompress(QByteArray::fromRawData(reinterpret_cast<const char*>(blob.data()), static_cast<int>(blob.size())));
 		result = cp::RpcValue::Blob(compressed_blob.cbegin(), compressed_blob.cend());
 	}
 
