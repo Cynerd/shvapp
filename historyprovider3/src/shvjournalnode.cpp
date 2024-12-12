@@ -809,6 +809,11 @@ private:
 				journalWarning() << msg;
 				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
 				skip_rest();
+			} else if (!result.isBlob()) {
+				msg = "Skipping all files from " + site_path.string() + " because " + current_download->sites_log_file.toStdString() + " had an unexpected type: " + result.typeName();
+				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
+				journalWarning() << msg;
+				skip_rest();
 			} else if (result.asBlob().size() > static_cast<unsigned>(wanted_size)) {
 				msg += "got invalid offset or more data than requested, got offset: " + std::to_string(result.metaValue("offset").toInt()) + " expected offset: " + std::to_string(wanted_offset) + " got size: " + std::to_string(result.metaValue("size").toInt()) + " expected size: " + std::to_string(wanted_size);
 				m_node->appendSyncStatus(current_download->slave_hp_path, msg);
