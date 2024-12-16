@@ -65,6 +65,13 @@ shv::chainpack::RpcValue SiteNode::AlarmWithTimestamp::toRpcValue() const
 
 auto get_changed_alarms(const auto& alarms, const auto& type_info, const auto& shv_path, const auto& value)
 {
+	std::string p_field_name;
+	shv::core::utils::ShvPropertyDescr nd = std::get<shv::core::utils::ShvTypeInfo>(type_info).propertyDescriptionForPath(shv_path, &p_field_name);
+
+	if (!p_field_name.empty()) { //skip bitfield paths generated in shvG2
+		return std::vector<shv::core::utils::ShvAlarm>{};
+	}
+
 	std::vector<shv::core::utils::ShvAlarm> changed_alarms;
 	for (const auto &alarm : shv::core::utils::ShvAlarm::checkAlarms(std::get<shv::core::utils::ShvTypeInfo>(type_info), shv_path, value)) {
 		if ([&alarms, alarm] {
