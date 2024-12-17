@@ -692,7 +692,7 @@ public:
 							continue;
 						}
 					}
-					msg += QStringLiteral(": syncing (remote size: %1 local size: %2)").arg(QString::number(remote_size), (file.exists() ? QString::number(local_size) : "<doesn't exist>"));
+					msg += QStringLiteral(": will sync (remote size: %1 local size: %2)").arg(QString::number(remote_size), (file.exists() ? QString::number(local_size) : "<doesn't exist>"));
 
 				}
 
