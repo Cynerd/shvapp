@@ -9,4 +9,5 @@ struct SlaveHpInfo {
 	std::string shv_path;
 	std::string site_sync_path;
 	QString cache_dir_path;
+	int download_chunk_size;
 };

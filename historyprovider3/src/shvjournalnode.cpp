@@ -537,10 +537,12 @@ public:
 		const std::string& shv_path,
 		const std::string& site_sync_path,
 		const QString& cache_dir_path,
-		const SyncType sync_type)
+		const SyncType sync_type,
+		const int download_chunk_size)
 		: QObject(node)
 		, m_node(node)
 		, m_shvPath(QString::fromStdString(shv_path))
+		, m_downloadChunkSize(download_chunk_size)
 	{
 		m_promise.start();
 		auto msg = "Syncing " + shv_path + " via file synchronization";
@@ -795,8 +797,7 @@ private:
 			->setMethod("read")
 			->setTimeout(60000);
 
-		const auto FILE_CHUNK_LIMIT = 128 * 1000; // 128 kB (not KiB, just to be sure we're not over some 128 KiB limit, which I'm not sure exists, but Kupťa said "just to be sure")
-		const auto wanted_size = std::min(current_download->remote_size - current_download->local_size - current_download->downloaded, FILE_CHUNK_LIMIT);
+		const auto wanted_size = std::min(current_download->remote_size - current_download->local_size - current_download->downloaded, m_downloadChunkSize);
 		const auto wanted_offset = current_download->local_size + current_download->downloaded;
 
 		QtFuture::connect(call, &shv::iotqt::rpc::RpcCall::maybeResult).then([this, file_read_param_api, current_download, wanted_size, wanted_offset] (const std::tuple<shv::chainpack::RpcValue, shv::chainpack::RpcError>& result_or_error) {
@@ -877,6 +878,7 @@ private:
 	QMap<QString, cp::RpcValue::Blob> m_downloadedFiles;
 	std::vector<QString> m_toTrim;
 	QPromise<void> m_promise;
+	int m_downloadChunkSize;
 	int m_counter = 0;
 };
 
@@ -917,7 +919,7 @@ void ShvJournalNode::syncLog(const std::string& shv_path, const std::function<vo
 		if (sync_type == FileSyncer::SyncType::Device && slave_hp.log_type == LogType::Legacy) {
 			all_synced.push_back((new LegacyFileSyncerImpl(this, slave_hp_path_qstr, slave_hp.cache_dir_path))->getFuture());
 		} else {
-			all_synced.push_back((new FileSyncer(this, slave_hp.shv_path, slave_hp.site_sync_path, slave_hp.cache_dir_path, sync_type))->getFuture());
+			all_synced.push_back((new FileSyncer(this, slave_hp.shv_path, slave_hp.site_sync_path, slave_hp.cache_dir_path, sync_type, slave_hp.download_chunk_size))->getFuture());
 		}
 	}
 

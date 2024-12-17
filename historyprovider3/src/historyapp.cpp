@@ -264,8 +264,11 @@ void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map&
 
 		bool is_site = meta_node.hasKey("HP") || meta_node.value("HP3").asMap().value("type", "device").asString() == "device";
 		std::string site_sync_path;
+		constexpr auto DEFAULT_FILE_CHUNK_LIMIT = 128 * 1000;
+		int download_chunk_size = DEFAULT_FILE_CHUNK_LIMIT;
 		if (is_site) {
 			site_sync_path = meta_node.value("HP3").asMap().value("syncPath", ".app/history").asString();
+			download_chunk_size = meta_node.value("HP3").asMap().value("readLogChunkLimit", DEFAULT_FILE_CHUNK_LIMIT).toInt();
 			node = new SiteNode(node_name.toStdString(), journal_cache_dir, log_type, parent_node);
 		} else {
 			node = new AggregateNode(node_name.toStdString(), parent_node);
@@ -282,7 +285,8 @@ void createTree(shv::iotqt::node::ShvNode* parent_node, const cp::RpcValue::Map&
 				.log_type = log_type,
 				.shv_path = log_source_shv_path,
 				.site_sync_path = site_sync_path,
-				.cache_dir_path = QString::fromStdString(journal_cache_dir)
+				.cache_dir_path = QString::fromStdString(journal_cache_dir),
+				.download_chunk_size = download_chunk_size,
 			});
 		}
 
