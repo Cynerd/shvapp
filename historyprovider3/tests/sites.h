@@ -194,6 +194,19 @@ const auto some_site = R"(
   },
 }
 )"_cpon;
+
+const auto site_with_custom_chunk_limit = R"(
+{
+  "_meta":{
+    "HP3":{"type": "HP3"}
+  },
+  "some_site": {
+    "_meta":{
+      "HP3":{"syncPath":".app/shvjournal", "readLogChunkLimit": 149}
+    },
+  },
+}
+)"_cpon;
 }
 
 

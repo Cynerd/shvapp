@@ -820,6 +820,87 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		}
 	}
 
+	DOCTEST_SUBCASE("custom fileChunkLimit")
+	{
+		auto expected_sync_info = std::make_shared<RpcValue>();
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			// Respond to the initial syncLog request.
+			RESPOND_YIELD(RpcValue::List());
+		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_RESPONSE(R"(["shv/eyas/opc"])"_cpon);
+			return CallNext::Yes;
+		});
+
+		auto expected_cache_contents = std::make_shared<RpcValue::List>();
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			mock->setBrokerConnected(false);
+			QTimer::singleShot(0, mock, [mock] {mock->setBrokerConnected(true);});
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			SEND_SITES_YIELD(mock_sites::site_with_custom_chunk_limit);
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			DISABLE_TYPEINFO("some_site");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv/some_site", "chng");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION("shv/some_site", "cmdlog");
+			REQUEST_YIELD("_shvjournal", "syncLog", R"({"shvPath": "shv/some_site", "waitForFinished": true})"_cpon);
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			*expected_cache_contents = RpcValue::List({{
+				RpcValue::List{ "2022-07-07T18-06-15-557.log2", dummy_logfile.size() }
+			}});
+			*expected_sync_info = R"EOF({
+				"shv/some_site": {"status": [
+					"Syncing shv/some_site via file synchronization",
+					"shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+					"shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
+					"shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 149",
+					"shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 149",
+					"shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 10",
+					"shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
+					"Syncing done"
+				]}
+			})EOF"_cpon;
+			EXPECT_REQUEST("shv/some_site/.app/shvjournal", "lsfiles", ls_size_true);
+			RESPOND_YIELD((RpcValue::List({{
+				{ "2022-07-07T18-06-15-557.log2", "f", dummy_logfile.size() }
+			}})));
+		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			ENABLE_MAP_FILE_API("shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2");
+		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_REQUEST("shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(0, 149));
+			RESPOND_YIELD(make_read_response(dummy_logfile, 0, 149));
+		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_REQUEST("shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(149, 149));
+			RESPOND_YIELD(make_read_response(dummy_logfile, 149, 149));
+		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_REQUEST("shv/some_site/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(298, 10));
+			RESPOND_YIELD(make_read_response(dummy_logfile, 298, 10));
+		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_RESPONSE(R"(["shv/some_site"])"_cpon);
+			REQUIRE(get_cache_contents("some_site") == *expected_cache_contents);
+			assert_sync_info_equal(HistoryApp::instance()->shvJournalNode()->syncInfo(), *expected_sync_info);
+		});
+	}
 	return res;
 }
 
