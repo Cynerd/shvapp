@@ -776,6 +776,10 @@ private:
 		journalDebug() << "Downloading next file chunk for" << m_shvPath.toStdString();
 		auto current_download = m_downloadQueue.begin();
 
+		if (current_download->downloaded == 0) {
+			m_node->appendSyncStatus(current_download->slave_hp_path, current_download->sites_log_file.toStdString() + ": starting to sync");
+		}
+
 		if (current_download->remote_size == 0) {
 			auto msg = current_download->sites_log_file + ": is an empty file, skipping read(), and creating it locally";
 			journalWarning() << msg;
