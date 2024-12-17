@@ -26,7 +26,7 @@
 namespace cp = shv::chainpack;
 namespace {
 constexpr auto SYNCLOG_DESC = R"(syncLog - triggers a manual sync
-With a string param, only the subtree signified by the string is synced.
+Accepts a mandatory string param, only the subtree signified by the string is synced.
 syncLog also takes a map param in this format: {
 	waitForFinished: bool // the method waits until the whole operation is finished and only then returns a response
 	shvPath: string // the subtree to be synced
