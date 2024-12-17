@@ -93,7 +93,8 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				*expected_sync_info = R"EOF({
 					"shv/eyas/opc": {"status": [
 						"Syncing shv/eyas/opc via file synchronization",
-						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 308",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
 						"Syncing done"
@@ -115,6 +116,50 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 		}
 
+		DOCTEST_SUBCASE("Multiple files without chronological order")
+		{
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				create_dummy_cache_files(cache_dir_path, {});
+				*expected_cache_contents = RpcValue::List({{
+					RpcValue::List{ "2022-07-07T18-06-15-557.log2", dummy_logfile.size() },
+					RpcValue::List{ "2022-07-08T18-06-15-557.log2", dummy_logfile.size() }
+				}});
+				*expected_sync_info = R"EOF({
+					"shv/eyas/opc": {"status": [
+						"Syncing shv/eyas/opc via file synchronization",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-08T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 308",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
+						"shv/eyas/opc/.app/shvjournal/2022-07-08T18-06-15-557.log2: starting to sync",
+						"shv/eyas/opc/.app/shvjournal/2022-07-08T18-06-15-557.log2: got chunk of size: 308",
+						"shv/eyas/opc/.app/shvjournal/2022-07-08T18-06-15-557.log2: successfully synced",
+						"Syncing done"
+					]},
+					"shv/eyas/with_app_history": {"status": ["Unknown"]}
+				})EOF"_cpon;
+				RESPOND_YIELD((RpcValue::List({
+					{{ "2022-07-08T18-06-15-557.log2", "f", dummy_logfile.size() }},
+					{{ "2022-07-07T18-06-15-557.log2", "f", dummy_logfile.size() }}
+				})));
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2");
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2", "read", read_offset_with_size(0, dummy_logfile.size()));
+				RESPOND_YIELD(make_read_response(dummy_logfile));
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_REQUEST("shv/eyas/opc/.app/shvjournal/2022-07-08T18-06-15-557.log2", "read", read_offset_with_size(0, dummy_logfile.size()));
+				RESPOND_YIELD(make_read_response(dummy_logfile));
+			});
+		}
+
 		DOCTEST_SUBCASE("Remote - has files and subdirectories, local - empty")
 		{
 			enqueue(res, [=] (MockRpcConnection* mock) {
@@ -125,7 +170,8 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				*expected_sync_info = R"EOF({
 					"shv/eyas/opc": {"status": [
 						"Syncing shv/eyas/opc via file synchronization",
-						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: got chunk of size: 308",
 						"shv/eyas/opc/.app/shvjournal/subdir/2022-07-07T18-06-15-557.log2: successfully synced",
 						"Syncing done"
@@ -166,9 +212,11 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				}});
 				*expected_sync_info = R"EOF({
 					"shv/eyas/opc": {"status": ["Syncing shv/eyas/opc via file synchronization",
-						"shv/eyas/opc/.app/shvjournal/2022-07-05T18-06-15-557.log2: syncing (remote size: 0 local size: <doesn't exist>)",
-						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-05T18-06-15-557.log2: will sync (remote size: 0 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-05T18-06-15-557.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/2022-07-05T18-06-15-557.log2: is an empty file, skipping read(), and creating it locally",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 308",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
 						"Syncing done"]}
@@ -287,7 +335,8 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				*expected_sync_info = R"EOF({
 					"shv/eyas/opc": {"status": [
 						"Syncing shv/eyas/opc via file synchronization",
-						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: got chunk of size: 308",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-000.log2: successfully synced",
 						"Syncing done"
@@ -320,7 +369,8 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				*expected_sync_info = R"EOF({
 					"shv/eyas/opc": {"status": [
 						"Syncing shv/eyas/opc via file synchronization",
-						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 4000000 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 4000000 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 128000",
@@ -390,7 +440,8 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				*expected_sync_info = R"EOF({
 					"shv/eyas/opc": {"status": [
 						"Syncing shv/eyas/opc via file synchronization",
-						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 150",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got chunk of size: 158",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: successfully synced",
@@ -428,7 +479,8 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				*expected_sync_info = R"EOF({
 					"shv/eyas/opc": {"status": [
 						"Syncing shv/eyas/opc via file synchronization",
-						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: syncing (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
 						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: got invalid offset or more data than requested, got offset: 0 expected offset: 0 got size: 4000000 expected size: 308",
 						"Skipping all files from shv/eyas/opc/.app/shvjournal/ because shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2 had an expected offset and/or size",
 						"Syncing done"

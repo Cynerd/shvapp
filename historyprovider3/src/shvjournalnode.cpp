@@ -26,7 +26,7 @@
 namespace cp = shv::chainpack;
 namespace {
 constexpr auto SYNCLOG_DESC = R"(syncLog - triggers a manual sync
-With a string param, only the subtree signified by the string is synced.
+Accepts a mandatory string param, only the subtree signified by the string is synced.
 syncLog also takes a map param in this format: {
 	waitForFinished: bool // the method waits until the whole operation is finished and only then returns a response
 	shvPath: string // the subtree to be synced
@@ -644,7 +644,15 @@ public:
 			newest_file_name_ms = std::min(oldest_dirtylog_entry_ms, newest_file_name_ms);
 			journalDebug() << "Newest file for" << shv::coreqt::utils::joinPath(slave_hp_path, path_prefix) << "is" << newest_file_name;
 
-			for (const auto& current_file : file_list.asList()) {
+			auto file_list_sorted = [&file_list] {
+				auto res = file_list.asList();
+				std::ranges::sort(res, [] (const auto& file_a, const auto& file_b) {
+					return file_a.asList().at(LS_FILES_RESPONSE_FILENAME).asString() < file_b.asList().at(LS_FILES_RESPONSE_FILENAME).asString();
+				});
+				return res;
+			}();
+
+			for (const auto& current_file : file_list_sorted) {
 				auto file_name = QString::fromStdString(current_file.asList().at(LS_FILES_RESPONSE_FILENAME).asString());
 				if (file_name == DIRTY_FILENAME) {
 					continue;
@@ -684,7 +692,7 @@ public:
 							continue;
 						}
 					}
-					msg += QStringLiteral(": syncing (remote size: %1 local size: %2)").arg(QString::number(remote_size), (file.exists() ? QString::number(local_size) : "<doesn't exist>"));
+					msg += QStringLiteral(": will sync (remote size: %1 local size: %2)").arg(QString::number(remote_size), (file.exists() ? QString::number(local_size) : "<doesn't exist>"));
 
 				}
 
@@ -767,6 +775,10 @@ private:
 
 		journalDebug() << "Downloading next file chunk for" << m_shvPath.toStdString();
 		auto current_download = m_downloadQueue.begin();
+
+		if (current_download->downloaded == 0) {
+			m_node->appendSyncStatus(current_download->slave_hp_path, current_download->sites_log_file.toStdString() + ": starting to sync");
+		}
 
 		if (current_download->remote_size == 0) {
 			auto msg = current_download->sites_log_file + ": is an empty file, skipping read(), and creating it locally";
