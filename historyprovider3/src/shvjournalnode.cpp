@@ -644,7 +644,15 @@ public:
 			newest_file_name_ms = std::min(oldest_dirtylog_entry_ms, newest_file_name_ms);
 			journalDebug() << "Newest file for" << shv::coreqt::utils::joinPath(slave_hp_path, path_prefix) << "is" << newest_file_name;
 
-			for (const auto& current_file : file_list.asList()) {
+			auto file_list_sorted = [&file_list] {
+				auto res = file_list.asList();
+				std::ranges::sort(res, [] (const auto& file_a, const auto& file_b) {
+					return file_a.asList().at(LS_FILES_RESPONSE_FILENAME).asString() < file_b.asList().at(LS_FILES_RESPONSE_FILENAME).asString();
+				});
+				return res;
+			}();
+
+			for (const auto& current_file : file_list_sorted) {
 				auto file_name = QString::fromStdString(current_file.asList().at(LS_FILES_RESPONSE_FILENAME).asString());
 				if (file_name == DIRTY_FILENAME) {
 					continue;
