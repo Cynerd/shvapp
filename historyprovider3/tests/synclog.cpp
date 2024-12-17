@@ -502,6 +502,19 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 		}
 
+		DOCTEST_SUBCASE("Don't synclog when already in progress")
+		{
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				create_dummy_cache_files(cache_dir_path, {});
+				*expected_sync_info = R"({
+					"shv/eyas/opc": {"status": ["Syncing shv/eyas/opc via file synchronization", "Syncing done"]},
+					"shv/eyas/with_app_history": {"status": ["Unknown"]}
+				})"_cpon;
+				REQUEST("_shvjournal", "syncLog", synclog_wait("shv/eyas/opc"));
+				RESPOND_YIELD(RpcValue::List());
+			});
+		}
+
 		enqueue(res, [=] (MockRpcConnection* mock) {
 			EXPECT_RESPONSE(R"(["shv/eyas/opc"])"_cpon);
 			REQUIRE(get_cache_contents(cache_dir_path) == *expected_cache_contents);

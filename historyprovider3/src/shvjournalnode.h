@@ -26,7 +26,7 @@ public:
 	};
 
 	void trimDirtyLog(const QString& cache_dir_path, const TrimLastMS trim_last_ms);
-	void syncLog(const std::string& shv_path, const std::function<void(const shv::chainpack::RpcValue::List&)> site_list_cb, const std::function<void()> success_cb);
+	void syncLog(const std::string& shv_path, const std::function<void(const shv::chainpack::RpcValue::List&)> site_list_cb, const std::function<void(const shv::chainpack::RpcValue::List&)> success_cb);
 
 	const QString& cacheDirPath() const;
 	const std::vector<SlaveHpInfo>& slaveHps() const;
