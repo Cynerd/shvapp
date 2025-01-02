@@ -76,6 +76,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status", "chng", 1);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
@@ -88,7 +91,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 			DOCTEST_SUBCASE("alarm off") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					NOTIFY("shv/some_site/one/status", "chng", 0);
+					NOTIFY_YIELD("shv/some_site/one/status", "chng", 0);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					NOTIFY_YIELD("shv/some_site/one/status", "chng", 0);
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -96,6 +102,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			DOCTEST_SUBCASE("alarm on and off") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					NOTIFY_YIELD("shv/some_site/one/status", "chng", 1);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
@@ -144,6 +153,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status1", "chng", 1);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
@@ -156,7 +168,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 			DOCTEST_SUBCASE("alarm 1 off") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					NOTIFY("shv/some_site/one/status1", "chng", 0);
+					NOTIFY_YIELD("shv/some_site/one/status1", "chng", 0);
+				});
+				enqueue(res, [=] (MockRpcConnection*) {
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -164,6 +178,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			DOCTEST_SUBCASE("alarm 1 on and off") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					NOTIFY_YIELD("shv/some_site/one/status1", "chng", 1);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
@@ -190,6 +207,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status2", "chng", 1);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
@@ -202,7 +222,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 			DOCTEST_SUBCASE("alarm 2 off") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					NOTIFY("shv/some_site/one/status2", "chng", 0);
+					NOTIFY_YIELD("shv/some_site/one/status2", "chng", 0);
+				});
+				enqueue(res, [=] (MockRpcConnection*) {
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -210,6 +232,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			DOCTEST_SUBCASE("alarm 2 on and off") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					NOTIFY_YIELD("shv/some_site/one/status2", "chng", 1);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
@@ -233,6 +258,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			DOCTEST_SUBCASE("both alarm 1 and 2 on and then 1 off") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					NOTIFY_YIELD("shv/some_site/one/status1", "chng", 1);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
@@ -288,6 +316,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status", "chng", 1);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
@@ -300,7 +331,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 			DOCTEST_SUBCASE("alarm off device 1") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					NOTIFY("shv/some_site/one/status", "chng", 0);
+					NOTIFY_YIELD("shv/some_site/one/status", "chng", 0);
+				});
+				enqueue(res, [=] (MockRpcConnection*) {
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -308,6 +341,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			DOCTEST_SUBCASE("alarm on and off 1") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					NOTIFY_YIELD("shv/some_site/one/status", "chng", 1);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
@@ -334,6 +370,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/two/status", "chng", 1);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
@@ -346,7 +385,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 
 			DOCTEST_SUBCASE("alarm off device 2") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					NOTIFY("shv/some_site/two/status", "chng", 0);
+					NOTIFY_YIELD("shv/some_site/two/status", "chng", 0);
+				});
+				enqueue(res, [=] (MockRpcConnection*) {
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -354,6 +395,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			DOCTEST_SUBCASE("alarm on and off 2") {
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					NOTIFY_YIELD("shv/some_site/two/status", "chng", 1);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					EXPECT_SIGNAL("some_site", "alarmmod");
@@ -396,6 +440,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				SEND_TYPEINFO("some_site", mock_typeinfo::different_severity);
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				NOTIFY_YIELD("shv/some_site/one/status1", "chng", 1);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_SIGNAL("some_site", "alarmmod");

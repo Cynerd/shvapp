@@ -250,7 +250,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			DOCTEST_SUBCASE("HP accepts events and puts them into the log")
 			{
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					NOTIFY("shv/eyas/opc/power-on", "chng", true);
+					NOTIFY_YIELD("shv/eyas/opc/power-on", "chng", true);
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
 					NOTIFY("shv/eyas/opc/power-on", "chng", false);
 					NOTIFY("shv/eyas/opc/run-command", "cmdlog", false);
 
@@ -577,8 +579,11 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			{
 				enqueue(res, [=] (MockRpcConnection* mock) {
 					HistoryApp::instance()->cliOptions()->setLogMaxAge(1000);
-					NOTIFY("shv/eyas/opc/power-on", "chng", true); // Send an event so that HP checks for dirty log age.
+					NOTIFY_YIELD("shv/eyas/opc/power-on", "chng", true); // Send an event so that HP checks for dirty log age.
 					// Nothing happens afterwards, since max age is >10
+				});
+				enqueue(res, [=] (MockRpcConnection* mock) {
+					EXPECT_SIGNAL("eyas/opc", "onlinestatuschng", 2);
 				});
 			}
 		}
