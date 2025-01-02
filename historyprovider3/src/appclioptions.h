@@ -14,4 +14,5 @@ public:
 	CLIOPTION_GETTER_SETTER2(int, "app.syncIteratorInterval", s, setS, yncIteratorInterval)
 	CLIOPTION_GETTER_SETTER2(int, "app.logMaxAge", l, setL, ogMaxAge)
 	CLIOPTION_GETTER_SETTER2(int, "app.cacheInitMaxAge", c, setC, acheInitMaxAge)
+	CLIOPTION_GETTER_SETTER2(int, "app.siteOnlineStatusInterval", s, setS, iteOnlineStatusInterval)
 };

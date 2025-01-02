@@ -19,4 +19,6 @@ AppCliOptions::AppCliOptions()
 	addOption("app.cacheInitMaxAge").setType(shv::chainpack::RpcValue::Type::Int).setNames("--cache-init-max-age")
 			// The correct value for this is definitely more than a week. A month plus three days is hopefully enough.
 			.setComment("Set max age in seconds for initial cache sync").setDefaultValue(60 /*seconds*/ * 60 /*minutes*/ * 24 /*hours*/ * 33 /*days*/);
+	addOption("app.siteOnlineStatusInterval").setType(shv::chainpack::RpcValue::Type::Int).setNames("--site-online-status-interval")
+			.setComment("Set site online status interval in seconds").setDefaultValue(10 /*seconds*/);
 }
