@@ -627,7 +627,8 @@ shv::chainpack::RpcValue AppRootNode::readFileCompressed(const shv::chainpack::R
 	}
 
 	cp::RpcValue result;
-	const auto& blob = readFile(request.shvPath().to<QString>()).asBlob();
+	const auto blob_rv = readFile(request.shvPath().to<QString>());
+	const auto &blob = blob_rv.asBlob();
 	if (compression_type == CompressionType::QCompress) {
 		const auto compressed_blob = qCompress(QByteArray::fromRawData(reinterpret_cast<const char*>(blob.data()), static_cast<int>(blob.size())));
 		result = cp::RpcValue::Blob(compressed_blob.cbegin(), compressed_blob.cend());
