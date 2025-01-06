@@ -145,7 +145,11 @@ QFuture<void> HistoryApp::reloadSites()
 	}
 
 	m_loadingSites = false;
+#if QT_VERSION < QT_VERSION_CHECK(6, 6, 0)
 	return QtFuture::makeReadyFuture();
+#else
+	return QtFuture::makeReadyVoidFuture();
+#endif
 }
 
 cp::RpcValue AppRootNode::callMethodRq(const cp::RpcRequest& rq)
