@@ -1,3 +1,4 @@
+#include "appclioptions.h"
 #include "sitenode.h"
 #include "historyapp.h"
 #include "valuecachenode.h"
@@ -24,11 +25,14 @@ namespace cp = shv::chainpack;
 namespace {
 const auto M_GET_LOG = "getLog";
 const auto M_LOG_SIZE = "logSize";
+const auto M_ONLINE_STATUS = "onlineStatus";
+const auto M_ONLINE_STATUS_CHNG = "onlinestatuschng";
 const std::vector<cp::MetaMethod> methods {
 	cp::methods::DIR,
 	cp::methods::LS,
 	{M_GET_LOG, cp::MetaMethod::Flag::None, "RpcValue", "RpcValue", cp::AccessLevel::Read},
 	{M_LOG_SIZE, cp::MetaMethod::Flag::IsGetter, {}, "UInt", cp::AccessLevel::Read},
+	{M_ONLINE_STATUS, cp::MetaMethod::Flag::IsGetter, {}, "i[Unknown,Offline,Online]", cp::AccessLevel::Read, {{M_ONLINE_STATUS_CHNG}}},
 };
 
 const auto M_PUSH_LOG = "pushLog";
@@ -54,6 +58,11 @@ std::vector<shv::core::utils::ShvAlarm> SiteNode::alarms() const
 	std::vector<shv::core::utils::ShvAlarm> res;
 	std::ranges::transform(m_alarms, std::back_inserter(res), std::identity{}, &AlarmWithTimestamp::alarm);
 	return res;
+}
+
+SiteNode::OnlineStatus SiteNode::onlineStatus() const
+{
+	return m_onlineStatus;
 }
 
 shv::chainpack::RpcValue SiteNode::AlarmWithTimestamp::toRpcValue() const
@@ -109,6 +118,16 @@ auto update_alarms(auto& alarms, const auto& changed_alarms, const auto& timesta
 			});
 		}
 	}
+}
+
+void SiteNode::setOnlineStatus(const OnlineStatus online_status)
+{
+	if (online_status == m_onlineStatus) {
+		return;
+	}
+
+	HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ONLINE_STATUS_CHNG, shv::chainpack::RpcValue::Int(online_status));
+	m_onlineStatus = online_status;
 }
 
 SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_dir, LogType log_type, ShvNode* parent)
@@ -223,6 +242,37 @@ SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_
 		});
 		ls_call->start();
 	}
+	auto site_online_timer = new QTimer();
+	connect(site_online_timer, &QTimer::timeout, this, [this, node_path = shvPath().asString()] {
+		auto* dir_call = shv::iotqt::rpc::RpcCall::create(HistoryApp::instance()->rpcConnection())
+			->setShvPath(shv::core::utils::joinPath("shv", node_path))
+			->setMethod(shv::chainpack::Rpc::METH_DIR)
+			->setParams(shv::chainpack::Rpc::METH_DIR);
+		connect(dir_call, &shv::iotqt::rpc::RpcCall::maybeResult, this, [this] (const shv::chainpack::RpcValue& /*dir_result*/, const shv::chainpack::RpcError& dir_error) {
+			if (dir_error.isValid()) {
+				if ((dir_error.code() == cp::RpcError::ErrorCode::MethodCallTimeout) ||
+					(dir_error.code() == cp::RpcError::ErrorCode::MethodNotFound)) {
+					setOnlineStatus(OnlineStatus::Offline);
+					return;
+				}
+			}
+
+			setOnlineStatus(OnlineStatus::Online);
+		});
+
+		dir_call->start();
+	});
+	site_online_timer->start(HistoryApp::instance()->cliOptions()->siteOnlineStatusInterval() * 1000);
+
+	connect(HistoryApp::instance()->valueCacheNode(), &ValueCacheNode::valueChanged, this, [this, node_path = shvPath().asString() + "/", site_online_timer] (const std::string& path, const shv::chainpack::RpcValue& /*value*/) {
+		assert(path.starts_with("shv/"));
+		auto path_without_shv_prefix = path.substr(4);
+		if (!path_without_shv_prefix.starts_with(node_path)) {
+			return;
+		}
+		setOnlineStatus(OnlineStatus::Online);
+		site_online_timer->start();
+	});
 
 }
 
@@ -507,6 +557,10 @@ shv::chainpack::RpcValue SiteNode::callMethod(const StringViewList& shv_path, co
 
 	if (method == M_LOG_SIZE) {
 		return shv::chainpack::RpcValue::Int(calculateCacheDirSize());
+	}
+
+	if (method == M_ONLINE_STATUS) {
+		return shv::chainpack::RpcValue::Int(m_onlineStatus);
 	}
 
 	return Super::callMethod(shv_path, method, params, user_id);

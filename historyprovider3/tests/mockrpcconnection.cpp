@@ -1,3 +1,4 @@
+#include <iostream>
 #include "mockrpcconnection.h"
 #include "src/historyapp.h"
 
@@ -46,6 +47,16 @@ shv::chainpack::RpcResponse MockRpcConnection::createErrorResponse(const std::st
 	return res;
 }
 
+shv::chainpack::RpcResponse MockRpcConnection::createTimeoutResponse(const std::string& error_msg)
+{
+	shv::chainpack::RpcResponse res;
+	res.setRequestId(m_messageQueue.head().requestId());
+	res.setError(shv::chainpack::RpcError::createSyncMethodCallTimeout(error_msg));
+	mockInfo() << "Sending timeout response:" << res.toPrettyString();
+	m_messageQueue.dequeue();
+	return res;
+}
+
 void MockRpcConnection::doRespond(const shv::chainpack::RpcValue& result)
 {
 	emit rpcMessageReceived(createResponse(result));
@@ -59,6 +70,11 @@ void MockRpcConnection::doRespondInEventLoop(const shv::chainpack::RpcValue& res
 void MockRpcConnection::doRespondErrorInEventLoop(const std::string& result)
 {
 	QTimer::singleShot(0, [this, response = createErrorResponse(result)] {emit rpcMessageReceived(response);});
+}
+
+void MockRpcConnection::doRespondTimeoutInEventLoop(const std::string& err_msg)
+{
+	QTimer::singleShot(0, [this, response = createTimeoutResponse(err_msg)] {emit rpcMessageReceived(response);});
 }
 
 shv::chainpack::RpcRequest MockRpcConnection::createRequest(const std::string& path, const std::string& method, const shv::chainpack::RpcValue& params)

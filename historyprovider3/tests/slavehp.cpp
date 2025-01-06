@@ -193,7 +193,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 		DOCTEST_SUBCASE("HP accepts events and puts them into the log")
 		{
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				NOTIFY("shv/fin/hel/tram/hel002/eyas/opc/power-on", "chng", true);
+				NOTIFY_YIELD("shv/fin/hel/tram/hel002/eyas/opc/power-on", "chng", true);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
 				NOTIFY("shv/fin/hel/tram/hel002/eyas/opc/power-on", "chng", false);
 
 				*expected_cache_contents = RpcValue::List({{

@@ -34,9 +34,17 @@ public:
 
 	std::vector<shv::core::utils::ShvAlarm> alarms() const;
 
+	enum class OnlineStatus {
+		Unknown,
+		Offline,
+		Online,
+	};
+	OnlineStatus onlineStatus() const;
+
 	AlarmLog alarmLog(const shv::chainpack::RpcValue& params);
 
 private:
+	void setOnlineStatus(const OnlineStatus online_status);
 	shv::chainpack::RpcValue getLog(const shv::core::utils::ShvGetLogParams& get_log_params);
 
 	std::string m_journalCacheDir;
@@ -44,6 +52,7 @@ private:
 	shv::chainpack::RpcValue::List m_pushLogDebugLog;
 	std::variant<shv::core::utils::ShvTypeInfo, std::string> m_typeInfo = std::string{"typeInfo not yet initialized"};
 	std::vector<AlarmWithTimestamp> m_alarms;
+	OnlineStatus m_onlineStatus = OnlineStatus::Unknown;
 
 	shv::core::utils::ShvAlarm::Severity m_overallAlarm = shv::core::utils::ShvAlarm::Severity::Invalid;
 };
