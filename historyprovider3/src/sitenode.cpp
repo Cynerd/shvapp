@@ -32,7 +32,7 @@ const std::vector<cp::MetaMethod> methods {
 	cp::methods::LS,
 	{M_GET_LOG, cp::MetaMethod::Flag::None, "RpcValue", "RpcValue", cp::AccessLevel::Read},
 	{M_LOG_SIZE, cp::MetaMethod::Flag::IsGetter, {}, "UInt", cp::AccessLevel::Read},
-	{M_ONLINE_STATUS, cp::MetaMethod::Flag::IsGetter, {}, "String", cp::AccessLevel::Read, {{M_ONLINE_STATUS_CHNG}}, "0 - unknown, 1 - offline, 2 - online"},
+	{M_ONLINE_STATUS, cp::MetaMethod::Flag::IsGetter, {}, "i[Unknown,Offline,Online]", cp::AccessLevel::Read, {{M_ONLINE_STATUS_CHNG}}, "0 - unknown, 1 - offline, 2 - online"},
 };
 
 const auto M_PUSH_LOG = "pushLog";
