@@ -60,6 +60,16 @@ std::vector<shv::core::utils::ShvAlarm> SiteNode::alarms() const
 	return res;
 }
 
+bool SiteNode::alarmIsStale(const std::string& path) const
+{
+	auto alarm = std::ranges::find_if(m_alarms, [&path] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.path == path;});
+	if (alarm == m_alarms.end()) {
+		throw std::logic_error(std::string{"Alarm "} + path + "doesn't exist");
+	}
+
+	return alarm->stale;
+}
+
 SiteNode::OnlineStatus SiteNode::onlineStatus() const
 {
 	return m_onlineStatus;
@@ -69,10 +79,11 @@ shv::chainpack::RpcValue SiteNode::AlarmWithTimestamp::toRpcValue() const
 {
 	auto res = this->alarm.toRpcValue(true).asMap();
 	res.emplace("timestamp", timestamp);
+	res.emplace("stale", stale);
 	return res;
 }
 
-auto get_changed_alarms(const auto& alarms, const auto& type_info, const auto& shv_path, const auto& value)
+auto get_changed_alarms(const auto& old_alarms, const auto& new_alarms, const auto& type_info, const auto& shv_path)
 {
 	std::string p_field_name;
 	shv::core::utils::ShvPropertyDescr nd = std::get<shv::core::utils::ShvTypeInfo>(type_info).propertyDescriptionForPath(shv_path, &p_field_name);
@@ -82,14 +93,14 @@ auto get_changed_alarms(const auto& alarms, const auto& type_info, const auto& s
 	}
 
 	std::vector<shv::core::utils::ShvAlarm> changed_alarms;
-	for (const auto &alarm : shv::core::utils::ShvAlarm::checkAlarms(std::get<shv::core::utils::ShvTypeInfo>(type_info), shv_path, value)) {
-		if ([&alarms, alarm] {
+	for (const auto &alarm : new_alarms) {
+		if ([&old_alarms, alarm] {
 				if (!alarm.isActive) {
 					// If the alarm is not active, we'll try to find a current active one with the same path.
-					return std::ranges::find(alarms, alarm.path, [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.path;}) != alarms.end();
+					return std::ranges::find(old_alarms, alarm.path, [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.path;}) != old_alarms.end();
 				}
 				// If it is active, we'll look into whether there already is an identical one.
-				return std::ranges::find(alarms, alarm, &SiteNode::AlarmWithTimestamp::alarm) == alarms.end();
+				return std::ranges::find(old_alarms, alarm, &SiteNode::AlarmWithTimestamp::alarm) == old_alarms.end();
 			} ()) {
 			changed_alarms.push_back(alarm);
 		}
@@ -114,7 +125,8 @@ auto update_alarms(auto& alarms, const auto& changed_alarms, const auto& timesta
 		if (changed_alarm.isActive) {
 			alarms.emplace_back(SiteNode::AlarmWithTimestamp{
 				.alarm = changed_alarm,
-				.timestamp = timestamp
+				.timestamp = timestamp,
+				.stale = false
 			});
 		}
 	}
@@ -124,6 +136,12 @@ void SiteNode::setOnlineStatus(const OnlineStatus online_status)
 {
 	if (online_status == m_onlineStatus) {
 		return;
+	}
+
+	if (online_status == OnlineStatus::Offline) {
+		for (auto& alarm : m_alarms) {
+			alarm.stale = true;
+		}
 	}
 
 	HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ONLINE_STATUS_CHNG, shv::chainpack::RpcValue::Int(online_status));
@@ -195,15 +213,36 @@ SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_
 				}
 
 				auto update_alarms_and_overall_alarm = [this] (const auto& shv_path, const auto& value, const auto& timestamp) {
-					auto changed_alarms = get_changed_alarms(m_alarms, m_typeInfo, shv_path, value);
+					bool should_send_signal = false;
+					auto alarm_mod_signal_sender = qScopeGuard([this, &should_send_signal] {
+						if (should_send_signal) {
+							HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ALARM_MOD);
+						}
+					});
+					auto new_alarms = shv::core::utils::ShvAlarm::checkAlarms(std::get<shv::core::utils::ShvTypeInfo>(m_typeInfo), shv_path, value);
+
+					for (const auto& new_alarm : new_alarms) {
+						if (new_alarm.isActive) {
+							auto matched_alarm = std::ranges::find(m_alarms, new_alarm, &SiteNode::AlarmWithTimestamp::alarm);
+							if (matched_alarm != m_alarms.end()) {
+								if (matched_alarm->stale) {
+									should_send_signal = true;
+								}
+								matched_alarm->stale = false;
+							}
+						}
+					}
+
+					auto changed_alarms = get_changed_alarms(m_alarms, new_alarms, m_typeInfo, shv_path);
 					if (changed_alarms.empty()) {
 						return;
 					}
 
+					should_send_signal = true;
+
 					update_alarms(m_alarms, changed_alarms, timestamp);
 
 					std::ranges::sort(m_alarms, std::less<shv::core::utils::ShvAlarm::Severity>{}, [] (const auto& alarm_with_ts) {return alarm_with_ts.alarm.severity;});
-					HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ALARM_MOD);
 
 					auto new_overall_alarm = m_alarms.empty() ? shv::core::utils::ShvAlarm::Severity::Invalid : m_alarms.front().alarm.severity;
 					if (new_overall_alarm != m_overallAlarm) {
@@ -427,7 +466,8 @@ AlarmLog SiteNode::alarmLog(const shv::chainpack::RpcValue& params)
 	while (log.next()) {
 		const auto& entry = log.entry();
 
-		auto changed_alarms = get_changed_alarms(current_snapshot, m_typeInfo, entry.path, entry.value);
+		auto new_alarms = shv::core::utils::ShvAlarm::checkAlarms(std::get<shv::core::utils::ShvTypeInfo>(m_typeInfo), entry.path, entry.value);
+		auto changed_alarms = get_changed_alarms(current_snapshot, new_alarms, m_typeInfo, entry.path);
 		if (!log.isInSnapshot()) {
 			if (!snapshot_saved) {
 				// Our snapshot is complete, so we'll save it now, because we'll keep updating it as we're building the events.
@@ -438,7 +478,8 @@ AlarmLog SiteNode::alarmLog(const shv::chainpack::RpcValue& params)
 			for (const auto& changed_alarm : changed_alarms) {
 				alarm_log.events.emplace_back(AlarmWithTimestamp{
 					.alarm = changed_alarm,
-					.timestamp = entry.dateTime()
+					.timestamp = entry.dateTime(),
+					.stale = false,
 				});
 			}
 		}

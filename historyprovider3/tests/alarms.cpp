@@ -79,10 +79,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status/some_alarm_name"),
 					});
@@ -107,10 +107,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status/some_alarm_name"),
 					});
@@ -118,10 +118,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status", "chng", 0);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -156,10 +156,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status1/some_alarm_name"),
 					});
@@ -183,10 +183,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status1/some_alarm_name"),
 					});
@@ -194,10 +194,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status1", "chng", 0);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -210,10 +210,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status2/some_alarm_name"),
 					});
@@ -237,10 +237,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status2/some_alarm_name"),
 					});
@@ -248,10 +248,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status2", "chng", 0);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -263,10 +263,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status1/some_alarm_name"),
 					});
@@ -319,10 +319,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status/some_alarm_name"),
 					});
@@ -346,10 +346,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("one/status/some_alarm_name"),
 					});
@@ -357,10 +357,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/one/status", "chng", 0);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -373,10 +373,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm("two/status/some_alarm_name"),
 					});
@@ -400,10 +400,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 						make_alarm( "two/status/some_alarm_name")
 					});
@@ -411,10 +411,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					NOTIFY_YIELD("shv/some_site/two/status", "chng", 0);
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site", "alarmmod");
+					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
 				});
 				enqueue(res, [=] (MockRpcConnection* mock) {
-					EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Invalid));
+					EXPECT_SIGNAL("some_site", "alarmmod");
 					REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
 				});
 			}
@@ -445,20 +445,20 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site", "alarmmod");
+				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Warning));
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Warning));
+				EXPECT_SIGNAL("some_site", "alarmmod");
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 					make_alarm("one/status1/alarm_warning", shv::core::utils::ShvAlarm::Severity::Warning),
 				});
 				NOTIFY_YIELD("shv/some_site/one/status2", "chng", 1);
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site", "alarmmod");
+				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+				EXPECT_SIGNAL("some_site", "alarmmod");
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 					make_alarm("one/status2/alarm_error"),
 					make_alarm("one/status1/alarm_warning", shv::core::utils::ShvAlarm::Severity::Warning),
@@ -490,10 +490,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				SEND_TYPEINFO_YIELD("some_site", mock_typeinfo::one_device);
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site", "alarmmod");
+				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+				EXPECT_SIGNAL("some_site", "alarmmod");
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 					make_alarm("one/status/some_alarm_name")
 				});
@@ -528,10 +528,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				SEND_TYPEINFO_YIELD("some_site", mock_typeinfo::one_device);
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site", "alarmmod");
+				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+				EXPECT_SIGNAL("some_site", "alarmmod");
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 					make_alarm("one/status/some_alarm_name")
 				});
@@ -545,10 +545,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				auto expected = RpcValue::Map{
 						{"some_site", RpcValue::Map {
 							{"snapshot", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue() }},
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z"), false}.toRpcValue()}},
 							{"events", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue()
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z"), false}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z"), false}.toRpcValue()
 							}}
 						}}
 				};
@@ -599,19 +599,19 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				SEND_TYPEINFO_YIELD("some_node/site_two", mock_typeinfo::one_device);
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_node/site_one", "alarmmod");
+				EXPECT_SIGNAL("some_node/site_one:overallAlarm", "chng", static_cast<int>(Severity::Error));
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_node/site_one:overallAlarm", "chng", static_cast<int>(Severity::Error));
+				EXPECT_SIGNAL("some_node/site_one", "alarmmod");
 				REQUIRE(HistoryApp::instance()->siteNode("some_node/site_one")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 					make_alarm("one/status/some_alarm_name")
 				});
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_node/site_two", "alarmmod");
+				EXPECT_SIGNAL("some_node/site_two:overallAlarm", "chng", static_cast<int>(Severity::Error));
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
-				EXPECT_SIGNAL("some_node/site_two:overallAlarm", "chng", static_cast<int>(Severity::Error));
+				EXPECT_SIGNAL("some_node/site_two", "alarmmod");
 				REQUIRE(HistoryApp::instance()->siteNode("some_node/site_two")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
 					make_alarm("one/status/some_alarm_name")
 				});
@@ -626,25 +626,85 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					RpcValue::Map {
 						{"some_node/site_one", RpcValue::Map {
 							{"snapshot", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z"), false}.toRpcValue(),
 							}},
 							{"events", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z"), false}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z"), false}.toRpcValue(),
 							}}
 						}},
 						{"some_node/site_two", RpcValue::Map {
 							{"snapshot", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name"), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:17.784Z"), false}.toRpcValue(),
 							}},
 							{"events", RpcValue::List{
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z")}.toRpcValue(),
-								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z")}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, false), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:20.784Z"), false}.toRpcValue(),
+								SiteNode::AlarmWithTimestamp{make_alarm("one/status/some_alarm_name", Severity::Error, true), RpcValue::DateTime::fromUtcString("2022-07-07T18:06:23.784Z"), false}.toRpcValue(),
 							}}
 						}}
 					}
 				};
 				EXPECT_RESPONSE(expected);
+			});
+		}
+
+		DOCTEST_SUBCASE("stale alarms") {
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				HistoryApp::instance()->cliOptions()->setSiteOnlineStatusInterval(2);
+				SEND_SITES_YIELD(mock_sites::some_site);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_TYPEINFO("some_site");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION_YIELD("shv/some_site", "chng");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SUBSCRIPTION("shv/some_site", "cmdlog");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				SEND_TYPEINFO("some_site", mock_typeinfo::one_device);
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{});
+				NOTIFY_YIELD("shv/some_site/one/status", "chng", 1);
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_site:overallAlarm", "chng", static_cast<int>(Severity::Error));
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_site", "alarmmod");
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
+					make_alarm("one/status/some_alarm_name"),
+				});
+				REQUIRE(!HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_REQUEST("shv/some_site", "dir", "dir");
+				RESPOND_TIMEOUT_YIELD();
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_site", "onlinestatuschng", 1);
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_REQUEST("shv/some_site", "dir", "dir");
+				RESPOND_YIELD(true);
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				NOTIFY_YIELD("shv/some_site/one/status", "chng", 1);
+			});
+			enqueue(res, [=] (MockRpcConnection*) {
+				REQUIRE(!HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
 			});
 		}
 	}

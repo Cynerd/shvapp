@@ -29,10 +29,12 @@ public:
 	struct AlarmWithTimestamp {
 		shv::core::utils::ShvAlarm alarm;
 		shv::chainpack::RpcValue::DateTime timestamp;
+		bool stale;
 		shv::chainpack::RpcValue toRpcValue() const;
 	};
 
 	std::vector<shv::core::utils::ShvAlarm> alarms() const;
+	bool alarmIsStale(const std::string& path) const;
 
 	enum class OnlineStatus {
 		Unknown,
