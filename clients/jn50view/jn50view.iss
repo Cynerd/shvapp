@@ -51,18 +51,18 @@ Source: {#BUILD_DIR}\bin\libshviotqt.dll; DestDir: {app}; Flags: ignoreversion
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-Source: {#QT_DIR}\bin\Qt5Core.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Gui.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Widgets.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5XmlPatterns.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Network.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Sql.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Xml.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Qml.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Svg.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5PrintSupport.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5SerialPort.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Multimedia.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Core.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Gui.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Widgets.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6XmlPatterns.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Network.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Sql.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Xml.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Qml.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Svg.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6PrintSupport.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6SerialPort.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Multimedia.dll; DestDir: {app}; Flags: ignoreversion
 
 Source: {#QT_DIR}\plugins\platforms\qwindows.dll; DestDir: {app}\platforms; Flags: ignoreversion
 
