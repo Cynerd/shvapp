@@ -48,12 +48,12 @@ Source: {#BUILD_DIR}\bin\libshviotqt.dll; DestDir: {app}; Flags: ignoreversion
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-Source: {#QT_DIR}\bin\QtCore.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\QtGui.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\QtWidgets.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\QtNetwork.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\QtSvg.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\QtXml.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Core.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Gui.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Widgets.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Network.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Svg.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\Qt6Xml.dll; DestDir: {app}; Flags: ignoreversion
 ;Source: {#QT_DIR}\bin\QtMultimedia.dll; DestDir: {app}; Flags: ignoreversion
 ;Source: {#QT_DIR}\bin\QTmultimediawidgets.dll; DestDir: {app}; Flags: ignoreversion
 ;Source: {#QT_DIR}\bin\QtOpenGL.dll; DestDir: {app}; Flags: ignoreversion
