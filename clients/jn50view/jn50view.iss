@@ -54,7 +54,7 @@ Source: {#BUILD_DIR}\bin\libshviotqt.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#QT_DIR}\bin\Qt6Core.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#QT_DIR}\bin\Qt6Gui.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#QT_DIR}\bin\Qt6Widgets.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt6XmlPatterns.dll; DestDir: {app}; Flags: ignoreversion
+;Source: {#QT_DIR}\bin\Qt6XmlPatterns.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#QT_DIR}\bin\Qt6Network.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#QT_DIR}\bin\Qt6Sql.dll; DestDir: {app}; Flags: ignoreversion
 Source: {#QT_DIR}\bin\Qt6Xml.dll; DestDir: {app}; Flags: ignoreversion
