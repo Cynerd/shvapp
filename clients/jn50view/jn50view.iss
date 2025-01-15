@@ -8,7 +8,7 @@
 #define APP_NAME_LOWER "jn50view"
 #define COMPANY "elektroline"
 
-#define QT_DIR "c:\Qt5\5.15.2\mingw81_64"
+#define QT_DIR "c:\Qt6\6.5.3\mingw_64"
 #define MINGW_DIR "C:\mingw-12\x86_64-12.1.0-release-posix-seh-rt_v10-rev3\mingw64"
 
 #define BUILD_DIR "..\.."
