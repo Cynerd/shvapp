@@ -9,7 +9,7 @@
 #define APP_NAME_LOWER "bfsview"
 #define COMPANY "elektroline"
 
-#define QT_DIR "C:\Qt5\5.15.2\mingw81_64"
+#define QT_DIR "C:\Qt6\6.5.3\mingw_64"
 #define MINGW_DIR "C:\mingw-12\x86_64-12.1.0-release-posix-seh-rt_v10-rev3\mingw64"
 
 #define BUILD_DIR "..\.."
@@ -48,15 +48,15 @@ Source: {#BUILD_DIR}\bin\libshviotqt.dll; DestDir: {app}; Flags: ignoreversion
 
 ; NOTE: Don't use "Flags: ignoreversion" on any shared system files
 
-Source: {#QT_DIR}\bin\Qt5Core.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Gui.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Widgets.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Network.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Svg.dll; DestDir: {app}; Flags: ignoreversion
-Source: {#QT_DIR}\bin\Qt5Xml.dll; DestDir: {app}; Flags: ignoreversion
-;Source: {#QT_DIR}\bin\Qt5Multimedia.dll; DestDir: {app}; Flags: ignoreversion
-;Source: {#QT_DIR}\bin\QT5multimediawidgets.dll; DestDir: {app}; Flags: ignoreversion
-;Source: {#QT_DIR}\bin\Qt5OpenGL.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\QtCore.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\QtGui.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\QtWidgets.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\QtNetwork.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\QtSvg.dll; DestDir: {app}; Flags: ignoreversion
+Source: {#QT_DIR}\bin\QtXml.dll; DestDir: {app}; Flags: ignoreversion
+;Source: {#QT_DIR}\bin\QtMultimedia.dll; DestDir: {app}; Flags: ignoreversion
+;Source: {#QT_DIR}\bin\QTmultimediawidgets.dll; DestDir: {app}; Flags: ignoreversion
+;Source: {#QT_DIR}\bin\QtOpenGL.dll; DestDir: {app}; Flags: ignoreversion
 
 ;Source: {#QT_DIR}\plugins\mediaservice\dsengine.dll; DestDir: {app}\mediaservice; Flags: ignoreversion
 Source: {#QT_DIR}\plugins\platforms\qwindows.dll; DestDir: {app}\platforms; Flags: ignoreversion
