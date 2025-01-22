@@ -116,6 +116,36 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			});
 		}
 
+		DOCTEST_SUBCASE("File API detection error")
+		{
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				create_dummy_cache_files(cache_dir_path, {});
+				*expected_cache_contents = RpcValue::List();
+				*expected_sync_info = R"EOF({
+					"shv/eyas/opc": {"status": [
+						"Syncing shv/eyas/opc via file synchronization",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: will sync (remote size: 308 local size: <doesn't exist>)",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: starting to sync",
+						"shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2: Simulated test timeout",
+						"Skipping all files from shv/eyas/opc/.app/shvjournal/ because shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2 download failed to finish",
+						"Syncing done"
+					]},
+					"shv/eyas/with_app_history": {"status": ["Unknown"]}
+				})EOF"_cpon;
+				RESPOND_YIELD((RpcValue::List({{
+					{ "2022-07-07T18-06-15-557.log2", "f", dummy_logfile.size() }
+				}})));
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				ENABLE_MAP_FILE_API("shv/eyas/opc/.app/shvjournal/2022-07-07T18-06-15-557.log2");
+			});
+
+			enqueue(res, [=] (MockRpcConnection* mock) {
+				RESPOND_TIMEOUT_YIELD();
+			});
+		}
+
 		DOCTEST_SUBCASE("Multiple files without chronological order")
 		{
 			enqueue(res, [=] (MockRpcConnection* mock) {
