@@ -1,12 +1,12 @@
 set -euxo pipefail
 echo "making SHV ${WORKSPACE:-}"
-export PATH="/c/mingw-12/x86_64-12.1.0-release-posix-seh-rt_v10-rev3/mingw64/bin:/c/Qt5/Tools/CMake_64/bin:$PATH"
+export PATH=/c/3dParty/mingw/x86_64-13.1.0-release-posix-seh-msvcrt-rt_v11-rev1/mingw64/bin:/c/cmake-3.29.0-rc4-windows-x86_64/bin:/c/Qt6/6.8.1/mingw_64/bin:$PATH
 export CXXFLAGS="-DGIT_COMMIT=${CI_COMMIT_SHA} -DGIT_BRANCH=${CI_COMMIT_REF_SLUG} -DBUILD_ID=${CI_PIPELINE_ID}"
 
 cmake.exe \
     -DLIBSHV_WITH_WEBSOCKETS=OFF \
     -G "MinGW Makefiles" \
-    -DCMAKE_PREFIX_PATH=C:/Qt6/6.5.3/mingw_64 \
+    -DCMAKE_PREFIX_PATH=C:/Qt6/6.8.1/mingw_64 \
     -DCMAKE_INSTALL_PREFIX=. \
     -DCMAKE_BUILD_TYPE=Release \
     -DBUILD_TESTING=OFF \
