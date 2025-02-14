@@ -949,6 +949,57 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			assert_sync_info_equal(HistoryApp::instance()->shvJournalNode()->syncInfo(), *expected_sync_info);
 		});
 	}
+
+	DOCTEST_SUBCASE("two sites with the same prefix accept events")
+	{
+		auto expected_sync_info = std::make_shared<RpcValue>();
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			// Respond to the initial syncLog request.
+			RESPOND_YIELD(RpcValue::List());
+		});
+
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_RESPONSE(R"(["shv/eyas/opc"])"_cpon);
+			return CallNext::Yes;
+		});
+
+		auto expected_cache_contents = std::make_shared<RpcValue::List>();
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			mock->setBrokerConnected(false);
+			QTimer::singleShot(0, mock, [mock] {mock->setBrokerConnected(true);});
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			SEND_SITES_YIELD(mock_sites::two_sites_with_same_prefix);
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			DISABLE_TYPEINFO("some_node/site1");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			DISABLE_TYPEINFO("some_node/site10");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv", "mntchng");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv/some_node/site1", "chng");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv/some_node/site1", "cmdlog");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION_YIELD("shv/some_node/site10", "chng");
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SUBSCRIPTION("shv/some_node/site10", "cmdlog");
+			NOTIFY_YIELD("shv/some_node/site10/some_path", "chng", true);
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SIGNAL("some_node/site10", "onlinestatuschng", 2);
+			REQUIRE(get_cache_contents("some_node/site10") == RpcValue::List({{
+				RpcValue::List{ "dirtylog", 50u }
+			}}));
+		});
+	}
 	return res;
 }
 

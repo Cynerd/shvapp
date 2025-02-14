@@ -138,6 +138,26 @@ const auto two_sites_inside_some_node = R"(
 }
 )"_cpon;
 
+const auto two_sites_with_same_prefix = R"(
+{
+  "_meta":{
+    "HP3":{"type": "HP3"}
+  },
+  "some_node": {
+    "site1": {
+      "_meta":{
+        "HP3":{"syncPath":".app/shvjournal"}
+      },
+    },
+    "site10": {
+      "_meta":{
+        "HP3":{"syncPath":".app/shvjournal"}
+      },
+    }
+  }
+}
+)"_cpon;
+
 const auto two_devices = R"(
 {
   "_meta":{

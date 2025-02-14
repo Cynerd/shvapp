@@ -200,8 +200,8 @@ void ShvJournalNode::onRpcMessageReceived(const cp::RpcMessage &msg)
 
 			if (it != m_slaveHps.end()) {
 				{
-					if (path.at(it->shv_path.size()) != '/') {
-						journalWarning() << "Discarding notification with a top-level node path. Offending path was:" << path << "slave hp:" << it->shv_path;
+					if (path.size() == it->shv_path.size()) {
+						journalWarning() << "Discarding notification with just a sitepath:" << path;
 						return;
 					}
 
