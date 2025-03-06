@@ -84,9 +84,10 @@ ShvJournalNode::ShvJournalNode(const std::vector<SlaveHpInfo>& slave_hps, const 
 
 	auto now = shv::chainpack::RpcValue::DateTime::now();
 	for (const auto& slave_hp : m_slaveHps) {
+		;
 		m_syncInfo.setValue(slave_hp.shv_path, shv::chainpack::RpcValue::Map {
 			{"timestamp", now},
-			{"status", shv::chainpack::RpcValue::List{"Unknown"}},
+			{"status", shv::chainpack::RpcValue::List{slave_hp.log_type == LogType::PushLog ? "Push log site, syncing disabled" : "Unknown"}},
 		});
 	}
 
