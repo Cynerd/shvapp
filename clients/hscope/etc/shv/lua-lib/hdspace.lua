@@ -1,11 +1,19 @@
 local shv_utils = require("shv_utils")
-return function (set_status, path_to_agent, filesystem_path)
+return function (set_status, path_to_agent, filesystem_path, warn_threshold, error_threshold)
 	if path_to_agent == nil then
 		error("path_to_agent mustn't be null")
 	end
 
 	if filesystem_path == nil then
 		error("filesystem_path mustn't be null")
+	end
+
+	if warn_threshold == nil then
+		warn_threshold = 75
+	end
+
+	if error_threshold == nil then
+		error_threshold = 90
 	end
 
 	local do_test = function ()
@@ -21,10 +29,10 @@ return function (set_status, path_to_agent, filesystem_path)
 			}
 
 			res.severity = "ok"
-			if percent >= 75 then
+			if percent >= warn_threshold then
 				res.severity = "warn"
 			end
-			if percent >= 90 then
+			if percent >= error_threshold then
 				res.severity = "error"
 			end
 
