@@ -348,11 +348,11 @@ const cp::MetaMethod* SiteNode::metaMethod(const StringViewList& shv_path, size_
 	return Super::metaMethod(shv_path, index);
 }
 
-qint64 SiteNode::calculateCacheDirSize() const
+quint64 SiteNode::calculateCacheDirSize() const
 {
 	journalDebug() << "Calculating cache directory size";
 	QDirIterator iter(QString::fromStdString(m_journalCacheDir), QDir::NoDotAndDotDot | QDir::Files, QDirIterator::Subdirectories);
-	qint64 total_size = 0;
+	quint64 total_size = 0;
 	while (iter.hasNext()) {
 		QFile file(iter.next());
 		total_size += file.size();
@@ -597,7 +597,7 @@ shv::chainpack::RpcValue SiteNode::callMethod(const StringViewList& shv_path, co
 	}
 
 	if (method == M_LOG_SIZE) {
-		return shv::chainpack::RpcValue::Int(calculateCacheDirSize());
+		return calculateCacheDirSize();
 	}
 
 	if (method == M_ONLINE_STATUS) {
