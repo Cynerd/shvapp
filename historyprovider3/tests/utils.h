@@ -155,6 +155,36 @@ const auto dummy_getlog_response = R"(
 ]
 )"_cpon;
 
+const auto dummy_getlog_response2 = R"(
+<
+  "dateTime":d"2022-09-15T13:30:04.293Z",
+  "device":{"id":"historyprovider"},
+  "fields":[
+    {"name":"timestamp"},
+    {"name":"path"},
+    {"name":"value"},
+    {"name":"shortTime"},
+    {"name":"domain"},
+    {"name":"valueFlags"},
+    {"name":"userId"}
+  ],
+  "logParams":{"recordCountLimit":1000, "until":d"2022-07-07T18:06:17.870Z", "withPathsDict":true, "withSnapshot":false, "withTypeInfo":false},
+  "logVersion":2,
+  "pathsDict":i{1:"APP_START", 2:"zone1/system/sig/plcDisconnected", 3:"zone1/zone/Zone1/plcDisconnected", 4:"zone1/pme/TSH1-1/switchRightCounterPermanent"},
+  "recordCount":4,
+  "recordCountLimit":1000,
+  "recordCountLimitHit":false,
+  "since":d"2022-07-07T18:06:15.557Z",
+  "until":d"2022-07-07T18:06:17.870Z",
+  "withPathsDict":true,
+  "withSnapshot":false
+>[
+  [d"2022-07-07T18:06:17.785Z", 2, false, null, null, 2u, null],
+  [d"2022-07-07T18:06:17.786Z", 3, false, null, null, 2u, null],
+  [d"2022-07-07T18:06:17.869Z", 4, 0u, null, null, 2u, null]
+]
+)"_cpon;
+
 const auto very_large_log_file = QString("2022-07-07T18:06:17.784Z	809781	zone1/system/sig/plcDisconnected	false		chng	2	\n").repeated(50000).toStdString();
 
 const auto five_thousand_records_getlog_response = RpcValue::fromCpon((R"(

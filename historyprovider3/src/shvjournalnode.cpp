@@ -295,7 +295,7 @@ void do_write_entries_to_file(const QString& file_path, const std::vector<shv::c
 const auto DIRTYLOG_SIZE_THRESHOLD = 1024 * 1024 * 20; // 20 MiB
 }
 
-void ShvJournalNode::trimDirtyLog(const QString& cache_dir_path, const TrimLastMS trim_last_ms)
+void ShvJournalNode::trimDirtyLog(const QString& cache_dir_path)
 {
 	journalInfo() << "Trimming dirty log for" << cache_dir_path;
 	using shv::coreqt::Utils;
@@ -325,27 +325,6 @@ void ShvJournalNode::trimDirtyLog(const QString& cache_dir_path, const TrimLastM
 	int64_t newest_entry_msec = 0;
 	if (!newest_file_entries.empty()) {
 		newest_entry_msec = newest_file_entries.back().epochMsec;
-	}
-
-	if (trim_last_ms == TrimLastMS::Yes) {
-		// It is possible that the newest logfile contains multiple entries with the same timestamp. Because it could
-		// have been written (by shvagent) in between two events that happened in the same millisecond, we can't be
-		// sure whether we have all events from the last millisecond. Because of that we will discard the last
-		// millisecond from the synced log, and keep it in the dirty log.
-		newest_file_entries.erase(std::find_if(newest_file_entries.begin(), newest_file_entries.end(), [newest_entry_msec] (const auto& entry) {
-			return entry.epochMsec == newest_entry_msec;
-		}), newest_file_entries.end());
-
-		// If we discarded all the entries from the newest file (i.e. it only
-		// contained data from the same timestamp), we'll just delete it. No
-		// point in having empty files. After that we don't have to do anything
-		// to the dirty log, because there's no data to trim.
-		if (newest_file_entries.empty()) {
-			QFile(cache_dir.filePath(entries.at(1))).remove();
-			return;
-		}
-
-		do_write_entries_to_file(cache_dir.filePath(entries.at(1)), newest_file_entries, Overwrite::Yes);
 	}
 
 	// Now filter dirty log's newer events.
@@ -392,7 +371,7 @@ void writeEntriesToFile(ShvJournalNode* node, const std::vector<shv::core::utils
 	}());
 
 	do_write_entries_to_file(file_name, downloaded_entries, Overwrite::No);
-	node->trimDirtyLog(cache_dir_path, ShvJournalNode::TrimLastMS::Yes);
+	node->trimDirtyLog(cache_dir_path);
 }
 }
 
@@ -430,13 +409,9 @@ public:
 					get_log_params.since = shv::chainpack::RpcValue::DateTime::fromMSecsSinceEpoch(newest_file_entries.back().dateTime().msecsSinceEpoch() + 1);
 					journalDebug() << "Newest entry" << get_log_params.since << "for" << slave_hp_path;
 
-					// No fancy algorithm for appending the files: we'll only append if the existing file can contain
-					// the whole RECORD_COUNT_LIMIT records.
-					if (newest_file_entries.size() + RECORD_COUNT_LIMIT < MAX_ENTRIES_PER_FILE) {
-						newest_file_entry_count = newest_file_entries.size();
-						file_name_hint = newest_file_name;
-						get_log_params.withSnapshot = false;
-					}
+					newest_file_entry_count = newest_file_entries.size();
+					file_name_hint = newest_file_name;
+					get_log_params.withSnapshot = false;
 				}
 			}
 		}
@@ -740,7 +715,7 @@ private:
 			writeFiles();
 
 			for (const auto& dir_path : m_toTrim) {
-				m_node->trimDirtyLog(dir_path, ShvJournalNode::TrimLastMS::No);
+				m_node->trimDirtyLog(dir_path);
 			}
 
 			journalDebug() << "No more files to download for" << m_shvPath.toStdString();
