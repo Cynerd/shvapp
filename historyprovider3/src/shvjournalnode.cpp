@@ -430,13 +430,9 @@ public:
 					get_log_params.since = shv::chainpack::RpcValue::DateTime::fromMSecsSinceEpoch(newest_file_entries.back().dateTime().msecsSinceEpoch() + 1);
 					journalDebug() << "Newest entry" << get_log_params.since << "for" << slave_hp_path;
 
-					// No fancy algorithm for appending the files: we'll only append if the existing file can contain
-					// the whole RECORD_COUNT_LIMIT records.
-					if (newest_file_entries.size() + RECORD_COUNT_LIMIT < MAX_ENTRIES_PER_FILE) {
-						newest_file_entry_count = newest_file_entries.size();
-						file_name_hint = newest_file_name;
-						get_log_params.withSnapshot = false;
-					}
+					newest_file_entry_count = newest_file_entries.size();
+					file_name_hint = newest_file_name;
+					get_log_params.withSnapshot = false;
 				}
 			}
 		}
