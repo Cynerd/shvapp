@@ -85,7 +85,7 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			REQUEST_YIELD("_shvjournal", "syncLog", synclog_wait("shv/legacy"));
 		});
 		enqueue(res, [=] (MockRpcConnection* mock) {
-			EXPECT_REQUEST(shv_path, "getLog", create_get_log_options(R"(d"2022-07-07T18:06:17.870Z")"_cpon, WithSnapshot::True));
+			EXPECT_REQUEST(shv_path, "getLog", create_get_log_options(R"(d"2022-07-07T18:06:17.870Z")"_cpon, WithSnapshot::False));
 			*expected_cache_contents = RpcValue::List({{
 				RpcValue::List{ "2022-07-07T18-06-15-551.log2", 15400000UL },
 				RpcValue::List{ "2022-07-07T18-06-15-557.log2", 201L },
@@ -93,8 +93,28 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			RESPOND_YIELD(five_thousand_records_getlog_response);
 		});
 		enqueue(res, [=] (MockRpcConnection* mock) {
-			EXPECT_REQUEST(shv_path, "getLog", create_get_log_options(R"(d"2022-07-07T18:06:15.557Z")"_cpon, WithSnapshot::False));
+			EXPECT_REQUEST(shv_path, "getLog", create_get_log_options(R"(d"2022-07-07T18:06:15.557Z")"_cpon, WithSnapshot::True));
 			RESPOND_YIELD(dummy_getlog_response);
+		});
+	}
+
+	DOCTEST_SUBCASE("hp correctly works with files at file boundary")
+	{
+		// e.g. it mustn't double-erase last MS
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			create_dummy_cache_files(cache_dir_path, {
+				{ "2022-07-07T18:06:17.784Z.log2", very_large_log_file},
+				{"dirtylog", dummy_logfile3},
+			});
+			REQUEST_YIELD("_shvjournal", "syncLog", synclog_wait("shv/legacy"));
+		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_REQUEST(shv_path, "getLog", create_get_log_options(R"(d"2022-07-07T18:06:17.785Z")"_cpon, WithSnapshot::False));
+			*expected_cache_contents = RpcValue::List({{
+				RpcValue::List{ "2022-07-07T18:06:17.784Z.log2", 4000148U },
+				RpcValue::List{ "dirtylog", 74U },
+			}});
+			RESPOND_YIELD(dummy_getlog_response2);
 		});
 	}
 
