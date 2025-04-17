@@ -69,7 +69,7 @@ else()
 	set(SHV_QT_VERSION_MAJOR 5)
 endif()
 
-find_package(Qt${SHV_QT_VERSION_MAJOR} COMPONENTS Core Concurrent OPTIONAL_COMPONENTS SerialPort Widgets Sql Svg Xml Mqtt WebSockets)
+find_package(Qt${SHV_QT_VERSION_MAJOR} COMPONENTS Core Concurrent OPTIONAL_COMPONENTS SerialPort Widgets Sql Svg Xml Mqtt WebSockets NetworkAuth)
 
 set(Qt_FOUND ${Qt${SHV_QT_VERSION_MAJOR}_FOUND})
 set(QtWidgets_FOUND ${Qt${SHV_QT_VERSION_MAJOR}Widgets_FOUND})
