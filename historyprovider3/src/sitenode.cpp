@@ -143,9 +143,9 @@ void SiteNode::setOnlineStatus(const OnlineStatus online_status)
 			alarm.stale = true;
 		}
 	}
+	m_onlineStatus = online_status;
 
 	HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ONLINE_STATUS_CHNG, shv::chainpack::RpcValue::Int(online_status));
-	m_onlineStatus = online_status;
 }
 
 SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_dir, LogType log_type, ShvNode* parent)
