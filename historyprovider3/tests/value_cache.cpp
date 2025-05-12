@@ -191,6 +191,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			REQUIRE(HistoryApp::instance()->siteNode("eyas/opc")->onlineStatus() == SiteNode::OnlineStatus::Offline);
 			REQUIRE(HistoryApp::instance()->siteNode("eyas/with_app_history")->onlineStatus() == SiteNode::OnlineStatus::Online);
 		});
+		enqueue(res, [=] (MockRpcConnection* mock) {
+			EXPECT_SIGNAL("eyas/opc", "alarmmod");
+		});
 	}
 	return res;
 }

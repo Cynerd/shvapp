@@ -683,6 +683,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 					make_alarm("one/status/some_alarm_name"),
 				});
 				REQUIRE(!HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
+					make_alarm("one/status/some_alarm_name"),
+				});
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_REQUEST("shv/some_site", "dir", "dir");
@@ -691,6 +694,10 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_SIGNAL("some_site", "onlinestatuschng", 1);
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
+					make_alarm("one/status/some_alarm_name"),
+					make_alarm("site-offline"),
+				});
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_SIGNAL("some_site", "alarmmod");
@@ -702,12 +709,18 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_SIGNAL("some_site", "onlinestatuschng", 2);
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
+					make_alarm("one/status/some_alarm_name"),
+				});
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
 				NOTIFY_YIELD("shv/some_site/one/status", "chng", 1);
 			});
 			enqueue(res, [=] (MockRpcConnection*) {
 				REQUIRE(!HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
+				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarms() == std::vector<shv::core::utils::ShvAlarm>{
+					make_alarm("one/status/some_alarm_name"),
+				});
 			});
 		}
 	}
