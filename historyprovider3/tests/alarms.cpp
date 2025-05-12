@@ -693,6 +693,9 @@ QQueue<std::function<CallNext(MockRpcConnection*)>> setup_test()
 				REQUIRE(HistoryApp::instance()->siteNode("some_site")->alarmIsStale("one/status/some_alarm_name"));
 			});
 			enqueue(res, [=] (MockRpcConnection* mock) {
+				EXPECT_SIGNAL("some_site", "alarmmod");
+			});
+			enqueue(res, [=] (MockRpcConnection* mock) {
 				EXPECT_REQUEST("shv/some_site", "dir", "dir");
 				RESPOND_YIELD(true);
 			});
