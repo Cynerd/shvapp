@@ -138,14 +138,47 @@ void SiteNode::setOnlineStatus(const OnlineStatus online_status)
 		return;
 	}
 
+	static constexpr auto SITE_OFFLINE_ALARM_KEY = "site-offline";
+
+	auto should_send_alarmmod = false;
 	if (online_status == OnlineStatus::Offline) {
+		// Always send alarmmod when a site becomes offline, because we're always creating the site-offline virtual
+		// alarm.
+		should_send_alarmmod = true;
 		for (auto& alarm : m_alarms) {
 			alarm.stale = true;
 		}
+
+		m_alarms.emplace_back(AlarmWithTimestamp{
+			.alarm = {
+				.path = SITE_OFFLINE_ALARM_KEY,
+				.isActive = true,
+				.description = "Site is offline",
+				.label = "Offline",
+				.level = 0,
+				.severity = shv::core::utils::ShvAlarm::Severity::Error,
+			},
+			.timestamp = shv::chainpack::RpcDateTime::now(),
+			.stale = false,
+		});
 	}
 
-	HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ONLINE_STATUS_CHNG, shv::chainpack::RpcValue::Int(online_status));
+	if (online_status == OnlineStatus::Online) {
+		auto erased_count = std::erase_if(m_alarms, [] (const auto& alarm_with_ts) {
+			return alarm_with_ts.alarm.path == SITE_OFFLINE_ALARM_KEY;
+		});
+
+		if (erased_count > 0) {
+			should_send_alarmmod = true;
+		}
+	}
+
 	m_onlineStatus = online_status;
+
+	HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ONLINE_STATUS_CHNG, shv::chainpack::RpcValue::Int(online_status));
+	if (should_send_alarmmod) {
+		HistoryApp::instance()->rpcConnection()->sendShvSignal(shvPath().asString(), M_ALARM_MOD);
+	}
 }
 
 SiteNode::SiteNode(const std::string& node_id, const std::string& journal_cache_dir, LogType log_type, ShvNode* parent)
@@ -581,6 +614,10 @@ shv::chainpack::RpcValue SiteNode::callMethod(const StringViewList& shv_path, co
 
 		shv::chainpack::RpcValue::List ret;
 		std::ranges::transform(m_alarms, std::back_inserter(ret), [] (const auto& alarm) { return alarm.toRpcValue(); });
+
+		if (m_onlineStatus == OnlineStatus::Offline) {
+			ret.emplace_back();
+		}
 		return ret;
 	}
 
