@@ -3,67 +3,56 @@
 
   outputs = {
     self,
-    flake-utils,
+    systems,
     nixpkgs,
-  }:
-    with builtins;
-    with flake-utils.lib;
-    with nixpkgs.lib; let
-      packages = pkgs:
-        with pkgs;
-        with qt6Packages; rec {
-          shvapp = stdenv.mkDerivation {
-            name = "shvapp";
-            src = builtins.path {
-              name = "shvapp-src";
-              path = ./.;
-              filter = path: type: ! hasSuffix ".nix" path;
-            };
-            outputs = ["out" "dev"];
-            buildInputs = [
-              wrapQtAppsHook
-              qtbase
-              qtmqtt
-              qtquick3d
-              qtserialport
-              qtsvg
-              qtwebsockets
-              libxkbcommon
-              doctest
-              lua5_3
-            ];
-            nativeBuildInputs = [
-              cmake
-            ];
-          };
-          default = shvapp;
-        };
-    in
-      {
-        nixosModules = import ./nixos/modules self.overlays.default;
-        overlays = {
-          shvapp = final: prev: packages (id prev);
-          default = self.overlays.shvapp;
-        };
-      }
-      // eachDefaultSystem (system: let
-        pkgs = nixpkgs.legacyPackages.${system}.extend self.overlays.default;
-      in {
-        packages = filterPackages system rec {
-          inherit (pkgs) shvapp;
-          default = shvapp;
-        };
-        legacyPackages = pkgs;
+  }: let
+    inherit (nixpkgs.lib) genAttrs;
+    forSystems = genAttrs (import systems);
+    withPkgs = func: forSystems (system: func self.legacyPackages.${system});
+    rev = self.shortRev or self.dirtyShortRev or "unknown";
 
-        # NixOS tests work only on Linux and we target Linux only anyway.
-        checks =
-          optionalAttrs (hasSuffix "-linux" system)
-          (import ./nixos/tests
-            nixpkgs.lib
-            self.legacyPackages.${system}
-            self.nixosModules)
-          // {inherit (self.packages.${system}) default;};
+    package = {
+      stdenv,
+      qt6Packages,
+      libxkbcommon,
+      doctest,
+      lua5_3,
+      cmake,
+    }:
+      stdenv.mkDerivation {
+        name = "shvapp-${rev}";
+        src = ./.;
+        outputs = ["out" "dev"];
+        buildInputs = [
+          qt6Packages.wrapQtAppsHook
+          qt6Packages.qtbase
+          qt6Packages.qtmqtt
+          qt6Packages.qtnetworkauth
+          qt6Packages.qtquick3d
+          qt6Packages.qtserialport
+          qt6Packages.qtsvg
+          qt6Packages.qtwebsockets
+          libxkbcommon
+          doctest
+          lua5_3
+        ];
+        nativeBuildInputs = [
+          cmake
+          qt6Packages.qttools
+        ];
+      };
+  in {
+    nixosModules = import ./nixos/modules self.overlays.default;
+    overlays.default = final: _: {
+      shvapp = final.callPackage package {};
+    };
 
-        formatter = pkgs.alejandra;
-      });
+    packages = withPkgs (pkgs: {default = pkgs.shvapp;});
+
+    legacyPackages =
+      forSystems (system:
+        nixpkgs.legacyPackages.${system}.extend self.overlays.default);
+
+    formatter = withPkgs (pkgs: pkgs.alejandra);
+  };
 }
